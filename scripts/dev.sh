@@ -45,7 +45,7 @@ cat <<PLIST > "${BUNDLE_PATH}/Contents/Info.plist"
     <key>CFBundleShortVersionString</key>
     <string>1.0-dev</string>
     <key>LSMinimumSystemVersion</key>
-    <string>14.0</string>
+    <string>13.0</string>
     <key>LSUIElement</key>
     <true/>
 </dict>
