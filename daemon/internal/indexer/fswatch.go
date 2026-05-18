@@ -43,28 +43,58 @@ func (m *Manager) Watch() {
 	}
 
 	addRecursive := func(root string) {
-		err := filepath.Walk(root, func(path string, info os.FileInfo, err error) error {
+		var walk func(string) error
+		walk = func(path string) error {
+			info, err := os.Lstat(path)
 			if err != nil {
 				return nil
 			}
-			if info.IsDir() {
-				addWatch(path)
-				if strings.HasSuffix(path, ".app") && path != root {
-					return filepath.SkipDir
+
+			// Follow symlinks to directories
+			if info.Mode()&os.ModeSymlink != 0 {
+				resolved, err := filepath.EvalSymlinks(path)
+				if err != nil {
+					return nil
+				}
+				info, err = os.Stat(resolved)
+				if err != nil {
+					return nil
+				}
+				if !info.IsDir() {
+					return nil
+				}
+				path = resolved
+			}
+
+			if !info.IsDir() {
+				return nil
+			}
+
+			addWatch(path)
+			if strings.HasSuffix(path, ".app") && path != root {
+				return nil
+			}
+
+			entries, err := os.ReadDir(path)
+			if err != nil {
+				return nil
+			}
+			for _, entry := range entries {
+				if err := walk(filepath.Join(path, entry.Name())); err != nil {
+					return err
 				}
 			}
 			return nil
-		})
-		if err != nil {
+		}
+		if err := walk(root); err != nil {
 			log.Printf("Error walking directory %s: %v", root, err)
 		}
 	}
 
-	done := make(chan bool)
 	go func() {
 		for {
 			select {
-		case event, ok := <-watcher.Events:
+			case event, ok := <-watcher.Events:
 				if !ok {
 					return
 				}
@@ -92,5 +122,5 @@ func (m *Manager) Watch() {
 	for _, dir := range m.dirs {
 		addRecursive(dir)
 	}
-	<-done
+	select {}
 }

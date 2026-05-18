@@ -56,13 +56,20 @@ func (m *Manager) refresh() {
 
 	wg.Wait()
 
-	// Update memory
+	// Update memory with scanned apps as fallback
 	m.mu.Lock()
 	m.apps = allApps
 	m.mu.Unlock()
 
 	// Update DB
 	m.db.SaveApps(allApps)
+
+	// Reload from DB to preserve frecency data in memory
+	if appsWithFrecency, err := m.db.LoadApps(); err == nil {
+		m.mu.Lock()
+		m.apps = appsWithFrecency
+		m.mu.Unlock()
+	}
 }
 
 func (m *Manager) GetApps() []App {
@@ -73,9 +80,21 @@ func (m *Manager) GetApps() []App {
 
 // UpdateFrecency should be called when an app is selected
 func (m *Manager) UpdateFrecency(path string) error {
+	now := time.Now()
+
+	m.mu.Lock()
+	for i := range m.apps {
+		if m.apps[i].Path == path {
+			m.apps[i].Frequency++
+			m.apps[i].LastOpened = now
+			break
+		}
+	}
+	m.mu.Unlock()
+
 	_, err := m.db.conn.Exec(`
 		UPDATE apps 
 		SET last_opened = ?, frequency = frequency + 1 
-		WHERE path = ?`, time.Now(), path)
+		WHERE path = ?`, now, path)
 	return err
 }
