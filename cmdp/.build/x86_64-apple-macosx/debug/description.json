@@ -1,0 +1,364 @@
+{
+  "builtTestProducts" : [
+    {
+      "binaryPath" : "/Users/techclub/Public/projects/cmdp/cmdp/.build/x86_64-apple-macosx/debug/cmdpPackageTests.xctest/Contents/MacOS/cmdpPackageTests",
+      "productName" : "cmdpPackageTests"
+    }
+  ],
+  "copyCommands" : {
+
+  },
+  "explicitTargetDependencyImportCheckingMode" : {
+    "none" : {
+
+    }
+  },
+  "generatedSourceTargetSet" : [
+
+  ],
+  "pluginDescriptions" : [
+
+  ],
+  "swiftCommands" : {
+    "C.cmdp-debug.module" : {
+      "executable" : "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc",
+      "importPath" : "/Users/techclub/Public/projects/cmdp/cmdp/.build/x86_64-apple-macosx/debug",
+      "inputs" : [
+        {
+          "kind" : "file",
+          "name" : "/Users/techclub/Public/projects/cmdp/cmdp/Sources/cmdp/App.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/techclub/Public/projects/cmdp/cmdp/Sources/cmdp/Services/SearchService.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/techclub/Public/projects/cmdp/cmdp/Sources/cmdp/Utils/Models.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/techclub/Public/projects/cmdp/cmdp/Sources/cmdp/Views/ContentView.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/techclub/Public/projects/cmdp/cmdp/.build/x86_64-apple-macosx/debug/CLibSearch.build/empty.c.o"
+        }
+      ],
+      "isLibrary" : false,
+      "moduleName" : "cmdp",
+      "moduleOutputPath" : "/Users/techclub/Public/projects/cmdp/cmdp/.build/x86_64-apple-macosx/debug/cmdp.swiftmodule",
+      "objects" : [
+        "/Users/techclub/Public/projects/cmdp/cmdp/.build/x86_64-apple-macosx/debug/cmdp.build/App.swift.o",
+        "/Users/techclub/Public/projects/cmdp/cmdp/.build/x86_64-apple-macosx/debug/cmdp.build/Services/SearchService.swift.o",
+        "/Users/techclub/Public/projects/cmdp/cmdp/.build/x86_64-apple-macosx/debug/cmdp.build/Utils/Models.swift.o",
+        "/Users/techclub/Public/projects/cmdp/cmdp/.build/x86_64-apple-macosx/debug/cmdp.build/Views/ContentView.swift.o"
+      ],
+      "otherArguments" : [
+        "-target",
+        "x86_64-apple-macosx14.0",
+        "-swift-version",
+        "5",
+        "-enable-batch-mode",
+        "-index-store-path",
+        "/Users/techclub/Public/projects/cmdp/cmdp/.build/x86_64-apple-macosx/debug/index/store",
+        "-Onone",
+        "-enable-testing",
+        "-g",
+        "-j8",
+        "-DSWIFT_PACKAGE",
+        "-DDEBUG",
+        "-Xcc",
+        "-fmodule-map-file=/Users/techclub/Public/projects/cmdp/cmdp/.build/x86_64-apple-macosx/debug/CLibSearch.build/module.modulemap",
+        "-Xcc",
+        "-I",
+        "-Xcc",
+        "/Users/techclub/Public/projects/cmdp/cmdp/Sources/CLibSearch/include",
+        "-module-cache-path",
+        "/Users/techclub/Public/projects/cmdp/cmdp/.build/x86_64-apple-macosx/debug/ModuleCache",
+        "-parseable-output",
+        "-Xfrontend",
+        "-entry-point-function-name",
+        "-Xfrontend",
+        "cmdp_main",
+        "-color-diagnostics",
+        "-sdk",
+        "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX14.2.sdk",
+        "-F",
+        "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/Frameworks",
+        "-I",
+        "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/lib",
+        "-L",
+        "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/lib",
+        "-Xcc",
+        "-isysroot",
+        "-Xcc",
+        "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX14.2.sdk",
+        "-Xcc",
+        "-F",
+        "-Xcc",
+        "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/Frameworks",
+        "-Xcc",
+        "-fPIC",
+        "-package-name",
+        "cmdp"
+      ],
+      "outputs" : [
+        {
+          "kind" : "file",
+          "name" : "/Users/techclub/Public/projects/cmdp/cmdp/.build/x86_64-apple-macosx/debug/cmdp.build/App.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/techclub/Public/projects/cmdp/cmdp/.build/x86_64-apple-macosx/debug/cmdp.build/Services/SearchService.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/techclub/Public/projects/cmdp/cmdp/.build/x86_64-apple-macosx/debug/cmdp.build/Utils/Models.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/techclub/Public/projects/cmdp/cmdp/.build/x86_64-apple-macosx/debug/cmdp.build/Views/ContentView.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/techclub/Public/projects/cmdp/cmdp/.build/x86_64-apple-macosx/debug/cmdp.swiftmodule"
+        }
+      ],
+      "sources" : [
+        "/Users/techclub/Public/projects/cmdp/cmdp/Sources/cmdp/App.swift",
+        "/Users/techclub/Public/projects/cmdp/cmdp/Sources/cmdp/Services/SearchService.swift",
+        "/Users/techclub/Public/projects/cmdp/cmdp/Sources/cmdp/Utils/Models.swift",
+        "/Users/techclub/Public/projects/cmdp/cmdp/Sources/cmdp/Views/ContentView.swift"
+      ],
+      "tempsPath" : "/Users/techclub/Public/projects/cmdp/cmdp/.build/x86_64-apple-macosx/debug/cmdp.build",
+      "wholeModuleOptimization" : false
+    },
+    "C.cmdpTests-debug.module" : {
+      "executable" : "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc",
+      "importPath" : "/Users/techclub/Public/projects/cmdp/cmdp/.build/x86_64-apple-macosx/debug",
+      "inputs" : [
+        {
+          "kind" : "file",
+          "name" : "/Users/techclub/Public/projects/cmdp/cmdp/Tests/cmdpTests/cmdpTests.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/techclub/Public/projects/cmdp/cmdp/.build/x86_64-apple-macosx/debug/cmdp"
+        }
+      ],
+      "isLibrary" : true,
+      "moduleName" : "cmdpTests",
+      "moduleOutputPath" : "/Users/techclub/Public/projects/cmdp/cmdp/.build/x86_64-apple-macosx/debug/cmdpTests.swiftmodule",
+      "objects" : [
+        "/Users/techclub/Public/projects/cmdp/cmdp/.build/x86_64-apple-macosx/debug/cmdpTests.build/cmdpTests.swift.o"
+      ],
+      "otherArguments" : [
+        "-target",
+        "x86_64-apple-macosx14.0",
+        "-swift-version",
+        "5",
+        "-enable-batch-mode",
+        "-index-store-path",
+        "/Users/techclub/Public/projects/cmdp/cmdp/.build/x86_64-apple-macosx/debug/index/store",
+        "-Onone",
+        "-enable-testing",
+        "-g",
+        "-j8",
+        "-DSWIFT_PACKAGE",
+        "-DDEBUG",
+        "-Xcc",
+        "-fmodule-map-file=/Users/techclub/Public/projects/cmdp/cmdp/.build/x86_64-apple-macosx/debug/CLibSearch.build/module.modulemap",
+        "-Xcc",
+        "-I",
+        "-Xcc",
+        "/Users/techclub/Public/projects/cmdp/cmdp/Sources/CLibSearch/include",
+        "-module-cache-path",
+        "/Users/techclub/Public/projects/cmdp/cmdp/.build/x86_64-apple-macosx/debug/ModuleCache",
+        "-parseable-output",
+        "-parse-as-library",
+        "-color-diagnostics",
+        "-sdk",
+        "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX14.2.sdk",
+        "-F",
+        "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/Frameworks",
+        "-I",
+        "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/lib",
+        "-L",
+        "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/lib",
+        "-Xcc",
+        "-isysroot",
+        "-Xcc",
+        "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX14.2.sdk",
+        "-Xcc",
+        "-F",
+        "-Xcc",
+        "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/Frameworks",
+        "-Xcc",
+        "-fPIC",
+        "-package-name",
+        "cmdp"
+      ],
+      "outputs" : [
+        {
+          "kind" : "file",
+          "name" : "/Users/techclub/Public/projects/cmdp/cmdp/.build/x86_64-apple-macosx/debug/cmdpTests.build/cmdpTests.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/techclub/Public/projects/cmdp/cmdp/.build/x86_64-apple-macosx/debug/cmdpTests.swiftmodule"
+        }
+      ],
+      "sources" : [
+        "/Users/techclub/Public/projects/cmdp/cmdp/Tests/cmdpTests/cmdpTests.swift"
+      ],
+      "tempsPath" : "/Users/techclub/Public/projects/cmdp/cmdp/.build/x86_64-apple-macosx/debug/cmdpTests.build",
+      "wholeModuleOptimization" : false
+    }
+  },
+  "swiftFrontendCommands" : {
+
+  },
+  "swiftTargetScanArgs" : {
+    "cmdp" : [
+      "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc",
+      "-module-name",
+      "cmdp",
+      "-package-name",
+      "cmdp",
+      "-incremental",
+      "-c",
+      "/Users/techclub/Public/projects/cmdp/cmdp/Sources/cmdp/App.swift",
+      "/Users/techclub/Public/projects/cmdp/cmdp/Sources/cmdp/Services/SearchService.swift",
+      "/Users/techclub/Public/projects/cmdp/cmdp/Sources/cmdp/Utils/Models.swift",
+      "/Users/techclub/Public/projects/cmdp/cmdp/Sources/cmdp/Views/ContentView.swift",
+      "-I",
+      "/Users/techclub/Public/projects/cmdp/cmdp/.build/x86_64-apple-macosx/debug",
+      "-target",
+      "x86_64-apple-macosx14.0",
+      "-swift-version",
+      "5",
+      "-enable-batch-mode",
+      "-index-store-path",
+      "/Users/techclub/Public/projects/cmdp/cmdp/.build/x86_64-apple-macosx/debug/index/store",
+      "-Onone",
+      "-enable-testing",
+      "-g",
+      "-j8",
+      "-DSWIFT_PACKAGE",
+      "-DDEBUG",
+      "-Xcc",
+      "-fmodule-map-file=/Users/techclub/Public/projects/cmdp/cmdp/.build/x86_64-apple-macosx/debug/CLibSearch.build/module.modulemap",
+      "-Xcc",
+      "-I",
+      "-Xcc",
+      "/Users/techclub/Public/projects/cmdp/cmdp/Sources/CLibSearch/include",
+      "-module-cache-path",
+      "/Users/techclub/Public/projects/cmdp/cmdp/.build/x86_64-apple-macosx/debug/ModuleCache",
+      "-parseable-output",
+      "-Xfrontend",
+      "-entry-point-function-name",
+      "-Xfrontend",
+      "cmdp_main",
+      "-color-diagnostics",
+      "-sdk",
+      "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX14.2.sdk",
+      "-F",
+      "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/Frameworks",
+      "-I",
+      "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/lib",
+      "-L",
+      "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/lib",
+      "-Xcc",
+      "-isysroot",
+      "-Xcc",
+      "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX14.2.sdk",
+      "-Xcc",
+      "-F",
+      "-Xcc",
+      "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/Frameworks",
+      "-Xcc",
+      "-fPIC",
+      "-package-name",
+      "cmdp",
+      "-driver-use-frontend-path",
+      "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc"
+    ],
+    "cmdpTests" : [
+      "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc",
+      "-module-name",
+      "cmdpTests",
+      "-package-name",
+      "cmdp",
+      "-incremental",
+      "-c",
+      "/Users/techclub/Public/projects/cmdp/cmdp/Tests/cmdpTests/cmdpTests.swift",
+      "-I",
+      "/Users/techclub/Public/projects/cmdp/cmdp/.build/x86_64-apple-macosx/debug",
+      "-target",
+      "x86_64-apple-macosx14.0",
+      "-swift-version",
+      "5",
+      "-enable-batch-mode",
+      "-index-store-path",
+      "/Users/techclub/Public/projects/cmdp/cmdp/.build/x86_64-apple-macosx/debug/index/store",
+      "-Onone",
+      "-enable-testing",
+      "-g",
+      "-j8",
+      "-DSWIFT_PACKAGE",
+      "-DDEBUG",
+      "-Xcc",
+      "-fmodule-map-file=/Users/techclub/Public/projects/cmdp/cmdp/.build/x86_64-apple-macosx/debug/CLibSearch.build/module.modulemap",
+      "-Xcc",
+      "-I",
+      "-Xcc",
+      "/Users/techclub/Public/projects/cmdp/cmdp/Sources/CLibSearch/include",
+      "-module-cache-path",
+      "/Users/techclub/Public/projects/cmdp/cmdp/.build/x86_64-apple-macosx/debug/ModuleCache",
+      "-parseable-output",
+      "-parse-as-library",
+      "-color-diagnostics",
+      "-sdk",
+      "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX14.2.sdk",
+      "-F",
+      "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/Frameworks",
+      "-I",
+      "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/lib",
+      "-L",
+      "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/lib",
+      "-Xcc",
+      "-isysroot",
+      "-Xcc",
+      "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX14.2.sdk",
+      "-Xcc",
+      "-F",
+      "-Xcc",
+      "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/Frameworks",
+      "-Xcc",
+      "-fPIC",
+      "-package-name",
+      "cmdp",
+      "-driver-use-frontend-path",
+      "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc"
+    ]
+  },
+  "targetDependencyMap" : {
+    "CLibSearch" : [
+
+    ],
+    "cmdp" : [
+      "CLibSearch"
+    ],
+    "cmdpTests" : [
+      "cmdp",
+      "CLibSearch"
+    ]
+  },
+  "testDiscoveryCommands" : {
+
+  },
+  "testEntryPointCommands" : {
+
+  }
+}
