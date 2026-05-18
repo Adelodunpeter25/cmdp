@@ -38,30 +38,34 @@ struct ContentView: View {
             Divider()
 
             // Results Area
-            ScrollViewReader { proxy in
-                ScrollView {
-                    LazyVStack(spacing: Theme.rowSpacing) {
-                        ForEach(Array(searchService.results.enumerated()), id: \.offset) { index, result in
-                            ResultRow(result: result, isSelected: selectedIndex == index, isHovered: hoveredIndex == index)
-                                .onHover { isHovered in
-                                    hoveredIndex = isHovered ? index : nil
-                                }
-                                .onTapGesture {
-                                    if selectedIndex == index {
-                                        executeSelection(result)
-                                    } else {
-                                        selectedIndex = index
+            if searchText.isEmpty {
+                EmptyStateView()
+            } else {
+                ScrollViewReader { proxy in
+                    ScrollView {
+                        LazyVStack(spacing: Theme.rowSpacing) {
+                            ForEach(Array(searchService.results.enumerated()), id: \.offset) { index, result in
+                                ResultRow(result: result, isSelected: selectedIndex == index, isHovered: hoveredIndex == index)
+                                    .onHover { isHovered in
+                                        hoveredIndex = isHovered ? index : nil
                                     }
-                                }
-                                .id(index)
+                                    .onTapGesture {
+                                        if selectedIndex == index {
+                                            executeSelection(result)
+                                        } else {
+                                            selectedIndex = index
+                                        }
+                                    }
+                                    .id(index)
+                            }
                         }
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 4)
                     }
-                    .padding(.horizontal, 8)
-                    .padding(.vertical, 4)
-                }
-                .scrollIndicators(.hidden)
-                .onChange(of: selectedIndex) { _ in
-                    proxy.scrollTo(selectedIndex, anchor: .center)
+                    .scrollIndicators(.hidden)
+                    .onChange(of: selectedIndex) { _ in
+                        proxy.scrollTo(selectedIndex, anchor: .center)
+                    }
                 }
             }
         }
@@ -70,7 +74,6 @@ struct ContentView: View {
         .clipShape(RoundedRectangle(cornerRadius: Theme.windowCornerRadius))
         .onAppear {
             isSearchFieldFocused = true
-            searchService.search(query: "")
             setupKeyEventMonitor()
         }
     }
@@ -186,5 +189,26 @@ struct VisualEffectView: NSViewRepresentable {
     func updateNSView(_ nsView: NSVisualEffectView, context: Context) {
         nsView.material = material
         nsView.blendingMode = blendingMode
+    }
+}
+
+struct EmptyStateView: View {
+    var body: some View {
+        VStack(spacing: 12) {
+            Spacer()
+            Image(systemName: "command")
+                .font(.system(size: 48))
+                .foregroundColor(Theme.textSecondary.opacity(0.3))
+            
+            Text("Search apps and folders...")
+                .font(.headline)
+                .foregroundColor(Theme.textSecondary)
+            
+            Text("Type a name to get started")
+                .font(.subheadline)
+                .foregroundColor(Theme.textSecondary.opacity(0.6))
+            Spacer()
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 }
