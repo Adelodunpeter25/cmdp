@@ -44,7 +44,7 @@ func (m *Manager) refresh() {
 	for _, dir := range m.dirs {
 		wg.Add(1)
 		go func(d string) {
-			defer wg.Add(-1)
+			defer wg.Done()
 			apps, err := Scan([]string{d}) // Using our scan logic
 			if err == nil {
 				mu.Lock()
