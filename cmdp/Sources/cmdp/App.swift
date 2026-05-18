@@ -7,11 +7,7 @@ class SpotlightWindow: NSWindow {
     }
     
     override func keyDown(with event: NSEvent) {
-        if event.keyCode == 53 { // Escape
-            NSApp.hide(nil)
-        } else {
-            super.keyDown(with: event)
-        }
+        super.keyDown(with: event)
     }
 }
 

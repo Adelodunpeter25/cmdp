@@ -98,12 +98,22 @@ struct ContentView: View {
                 }
                 return nil // Consume event
             case 53: // Escape
-                NSApp.hide(nil)
+                if searchText.isEmpty {
+                    NSApp.hide(nil)
+                } else {
+                    clearSearch()
+                }
                 return nil // Consume event
             default:
                 return event
             }
         }
+    }
+
+    private func clearSearch() {
+        searchText = ""
+        selectedIndex = 0
+        searchService.search(query: "")
     }
 
     func executeSelection(_ result: AppResult) {
