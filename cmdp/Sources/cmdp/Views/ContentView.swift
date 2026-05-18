@@ -131,7 +131,7 @@ struct ResultRow: View {
     
     var body: some View {
         HStack(spacing: 12) {
-            if let nsImage = IconManager.shared.icon(for: result.App.IconPath) {
+            if let nsImage = IconManager.shared.icon(for: result.App.IconPath, fallbackAppPath: result.App.Path) {
                 Image(nsImage: nsImage)
                     .resizable()
                     .frame(width: Theme.iconSize, height: Theme.iconSize)

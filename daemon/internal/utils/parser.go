@@ -38,6 +38,8 @@ func ParseAppInfo(appPath string) (string, string) {
 	iconFile := ""
 	if val, ok := data["CFBundleIconFile"].(string); ok && val != "" {
 		iconFile = val
+	} else if val, ok := data["CFBundleIconName"].(string); ok && val != "" {
+		iconFile = val
 	}
 
 	return name, iconFile
