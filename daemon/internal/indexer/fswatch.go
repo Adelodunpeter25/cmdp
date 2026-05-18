@@ -34,6 +34,14 @@ func (m *Manager) Watch() {
 		}
 	}
 
+	isInsideAppBundle := func(path string) bool {
+		cleanPath := filepath.Clean(path)
+		if strings.HasSuffix(cleanPath, ".app") {
+			return false
+		}
+		return strings.Contains(cleanPath, ".app"+string(os.PathSeparator))
+	}
+
 	addRecursive := func(root string) {
 		err := filepath.Walk(root, func(path string, info os.FileInfo, err error) error {
 			if err != nil {
@@ -56,9 +64,12 @@ func (m *Manager) Watch() {
 	go func() {
 		for {
 			select {
-			case event, ok := <-watcher.Events:
+		case event, ok := <-watcher.Events:
 				if !ok {
 					return
+				}
+				if isInsideAppBundle(event.Name) {
+					continue
 				}
 				if event.Op&fsnotify.Create == fsnotify.Create {
 					if info, err := os.Stat(event.Name); err == nil && info.IsDir() {
