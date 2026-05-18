@@ -7,7 +7,11 @@ class SpotlightWindow: NSWindow {
     }
     
     override func keyDown(with event: NSEvent) {
-        super.keyDown(with: event)
+        if event.keyCode == 53 { // Escape
+            NSApp.hide(nil)
+        } else {
+            super.keyDown(with: event)
+        }
     }
 }
 
@@ -24,8 +28,12 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             styleMask: [.fullSizeContentView, .borderless],
             backing: .buffered, defer: false)
         
-        window?.center()
         window?.setFrameAutosaveName("Main Window")
+        
+        // If no saved position, center it once
+        if window?.frame.origin.x == 0 && window?.frame.origin.y == 0 {
+            window?.center()
+        }
         window?.contentView = NSHostingView(rootView: contentView)
         window?.isMovableByWindowBackground = true
         window?.backgroundColor = .clear

@@ -25,8 +25,7 @@ class HotKeyService {
         if window.isVisible && NSApp.isActive {
             NSApp.hide(nil)
         } else {
-            // Center the window before showing
-            window.center()
+            // Bring to front at last known position
             window.makeKeyAndOrderFront(nil)
             NSApp.activate(ignoringOtherApps: true)
         }
