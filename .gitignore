@@ -33,3 +33,5 @@ Package.resolved
 # Project specific
 daemon/build/
 cmdp/.build/
+*.app/
+*.dmg
