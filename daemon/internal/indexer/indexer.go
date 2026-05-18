@@ -4,6 +4,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"github.com/Adelodunpeter25/cmdp/daemon/internal/utils"
 )
@@ -12,6 +13,8 @@ type App struct {
 	Name     string
 	Path     string
 	IconPath string
+	LastOpened time.Time
+	Frequency  int
 }
 
 // Scan looks for .app bundles in the given directories
@@ -53,7 +56,10 @@ func Scan(dirs []string) ([]App, error) {
 					Path:     path,
 					IconPath: iconPath,
 				})
-				return filepath.SkipDir // Don't look inside the app bundle
+				if info.IsDir() {
+					return filepath.SkipDir // Don't look inside the app bundle
+				}
+				return nil
 			}
 			return nil
 		})

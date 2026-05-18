@@ -1,6 +1,9 @@
 package search
 
 import (
+	"sort"
+	"time"
+
 	"github.com/sahilm/fuzzy"
 	"github.com/Adelodunpeter25/cmdp/daemon/internal/indexer"
 )
@@ -13,12 +16,18 @@ type Result struct {
 
 // Apps matches a query against a slice of Apps using fuzzy matching
 func Apps(query string, apps []indexer.App) []Result {
+	if len(apps) == 0 {
+		return nil
+	}
+
 	if query == "" {
-		// Return all apps (or perhaps an empty list) if no query
 		results := make([]Result, len(apps))
 		for i, app := range apps {
 			results[i] = Result{App: app, Score: 0}
 		}
+		sort.SliceStable(results, func(i, j int) bool {
+			return frecencyRank(results[i].App) > frecencyRank(results[j].App)
+		})
 		return results
 	}
 
@@ -31,7 +40,7 @@ func Apps(query string, apps []indexer.App) []Result {
 	}
 
 	matches := fuzzy.Find(query, names)
-	
+
 	results := make([]Result, len(matches))
 	for i, match := range matches {
 		results[i] = Result{
@@ -40,5 +49,33 @@ func Apps(query string, apps []indexer.App) []Result {
 		}
 	}
 
+	sort.SliceStable(results, func(i, j int) bool {
+		left := float64(results[i].Score)*1_000_000 + frecencyRank(results[i].App)
+		right := float64(results[j].Score)*1_000_000 + frecencyRank(results[j].App)
+		if left == right {
+			return results[i].App.Name < results[j].App.Name
+		}
+		return left > right
+	})
+
 	return results
+}
+
+func frecencyRank(app indexer.App) float64 {
+	score := float64(app.Frequency) * 1_000_000
+	if app.LastOpened.IsZero() {
+		return score
+	}
+
+	ageMinutes := time.Since(app.LastOpened).Minutes()
+	if ageMinutes < 0 {
+		ageMinutes = 0
+	}
+
+	recency := 1_000_000 - ageMinutes
+	if recency < 0 {
+		recency = 0
+	}
+
+	return score + recency
 }

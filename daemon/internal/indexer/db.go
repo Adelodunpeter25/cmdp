@@ -2,6 +2,9 @@ package indexer
 
 import (
 	"database/sql"
+	"errors"
+	"time"
+
 	_ "github.com/mattn/go-sqlite3"
 )
 
@@ -64,7 +67,7 @@ func (db *DB) SaveApps(apps []App) error {
 }
 
 func (db *DB) LoadApps() ([]App, error) {
-	rows, err := db.conn.Query("SELECT name, path, icon_path FROM apps")
+	rows, err := db.conn.Query("SELECT name, path, icon_path, last_opened, frequency FROM apps")
 	if err != nil {
 		return nil, err
 	}
@@ -73,10 +76,34 @@ func (db *DB) LoadApps() ([]App, error) {
 	var apps []App
 	for rows.Next() {
 		var app App
-		if err := rows.Scan(&app.Name, &app.Path, &app.IconPath); err != nil {
+		var lastOpened sql.NullString
+		if err := rows.Scan(&app.Name, &app.Path, &app.IconPath, &lastOpened, &app.Frequency); err != nil {
 			return nil, err
+		}
+		if lastOpened.Valid {
+			parsed, err := parseSQLiteTime(lastOpened.String)
+			if err == nil {
+				app.LastOpened = parsed
+			}
 		}
 		apps = append(apps, app)
 	}
 	return apps, nil
+}
+
+func parseSQLiteTime(value string) (time.Time, error) {
+	layouts := []string{
+		time.RFC3339Nano,
+		time.RFC3339,
+		"2006-01-02 15:04:05",
+		"2006-01-02 15:04:05-07:00",
+	}
+
+	for _, layout := range layouts {
+		if parsed, err := time.Parse(layout, value); err == nil {
+			return parsed, nil
+		}
+	}
+
+	return time.Time{}, errors.New("unable to parse sqlite time")
 }
