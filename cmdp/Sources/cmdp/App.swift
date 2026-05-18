@@ -9,6 +9,7 @@ class SpotlightWindow: NSWindow {
 
 class AppDelegate: NSObject, NSApplicationDelegate {
     var window: SpotlightWindow?
+    var hotKeyService: HotKeyService?
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         // Create the spotlight-like window
@@ -30,10 +31,13 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         // Ensure it stays on top like Spotlight
         window?.level = .floating
         
+        // Initialize HotKey Service
+        hotKeyService = HotKeyService(window: window)
+
         // Make key and bring to front
         window?.makeKeyAndOrderFront(nil)
         
-        // CRITICAL: Activate the app so it can receive focus
+        // Activate the app
         NSApp.activate(ignoringOtherApps: true)
     }
 }
