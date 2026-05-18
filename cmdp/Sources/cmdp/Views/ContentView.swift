@@ -133,10 +133,6 @@ struct ResultRow: View {
                 Text(result.App.Name)
                     .font(.system(size: 14, weight: isSelected ? .semibold : .regular))
                     .foregroundColor(isSelected ? .white : .primary)
-                Text(result.App.Path)
-                    .font(.system(size: 10))
-                    .foregroundColor(isSelected ? .white.opacity(0.7) : .secondary)
-                    .lineLimit(1)
             }
             Spacer()
         }
