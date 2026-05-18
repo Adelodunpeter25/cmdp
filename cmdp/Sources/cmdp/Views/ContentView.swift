@@ -47,10 +47,11 @@ struct ContentView: View {
                                     hoveredIndex = isHovered ? index : nil
                                 }
                                 .onTapGesture {
-                                    selectedIndex = index
-                                }
-                                .onTapGesture(count: 2) {
-                                    executeSelection(result)
+                                    if selectedIndex == index {
+                                        executeSelection(result)
+                                    } else {
+                                        selectedIndex = index
+                                    }
                                 }
                                 .id(index)
                         }
