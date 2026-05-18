@@ -3,6 +3,9 @@ import CLibSearch
 
 class SearchService: ObservableObject {
     @Published var results: [AppResult] = []
+    private let searchQueue = DispatchQueue(label: "cmdp.search.queue", qos: .userInitiated)
+    private let stateQueue = DispatchQueue(label: "cmdp.search.state")
+    private var searchRevision: Int = 0
     
     init() {
         // Initialize the Go Engine
@@ -10,41 +13,25 @@ class SearchService: ObservableObject {
     }
     
     func search(query: String) {
-        query.withCString { cQuery in
-            // Call the Go function
-            // Note: Go returns a C string that we must free
-            guard let cResult = SearchApps(UnsafeMutablePointer(mutating: cQuery)) else {
-                DispatchQueue.main.async {
-                    self.results = []
-                }
-                return
+        let revision = stateQueue.sync {
+            searchRevision += 1
+            return searchRevision
+        }
+
+        let searchText = query
+        searchQueue.async { [weak self] in
+            guard let self else { return }
+
+            let searchResults = self.performSearch(query: searchText)
+
+            let shouldPublish = self.stateQueue.sync {
+                revision == self.searchRevision
             }
-            
-            // Convert C string back to Swift Data
-            let jsonString = String(cString: cResult)
-            
-            // VERY IMPORTANT: Free the C string allocated by Go's C.CString
-            free(cResult)
-            
-            guard let data = jsonString.data(using: .utf8) else {
-                DispatchQueue.main.async {
-                    self.results = []
-                }
-                return
-            }
-            
-            // Parse JSON
-            do {
-                let decoder = JSONDecoder()
-                let searchResults = try decoder.decode([AppResult].self, from: data)
-                DispatchQueue.main.async {
-                    self.results = searchResults
-                }
-            } catch {
-                print("SearchService: Failed to decode JSON: \(error)")
-                DispatchQueue.main.async {
-                    self.results = []
-                }
+
+            guard shouldPublish else { return }
+
+            DispatchQueue.main.async {
+                self.results = searchResults
             }
         }
     }
@@ -53,5 +40,31 @@ class SearchService: ObservableObject {
         app.App.Path.withCString { cPath in
             MarkSelected(UnsafeMutablePointer(mutating: cPath))
         }
+    }
+
+    private func performSearch(query: String) -> [AppResult] {
+        var decodedResults: [AppResult] = []
+
+        query.withCString { cQuery in
+            guard let cResult = SearchApps(UnsafeMutablePointer(mutating: cQuery)) else {
+                return
+            }
+
+            let jsonString = String(cString: cResult)
+            free(cResult)
+
+            guard let data = jsonString.data(using: .utf8) else {
+                return
+            }
+
+            do {
+                let decoder = JSONDecoder()
+                decodedResults = try decoder.decode([AppResult].self, from: data)
+            } catch {
+                print("SearchService: Failed to decode JSON: \(error)")
+            }
+        }
+
+        return decodedResults
     }
 }
