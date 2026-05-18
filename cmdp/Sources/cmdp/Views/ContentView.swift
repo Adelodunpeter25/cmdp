@@ -39,46 +39,23 @@ struct ContentView: View {
 
             // Results Area
             ScrollViewReader { proxy in
-                List {
-                    ForEach(Array(searchService.results.enumerated()), id: \.offset) { index, result in
-                        HStack {
-                            if let nsImage = NSImage(contentsOfFile: result.App.IconPath) {
-                                Image(nsImage: nsImage)
-                                    .resizable()
-                                    .frame(width: 32, height: 32)
-                            } else {
-                                Image(systemName: "app.fill")
-                                    .resizable()
-                                    .frame(width: 32, height: 32)
-                                    .foregroundColor(.blue)
-                            }
-                            
-                            VStack(alignment: .leading) {
-                                Text(result.App.Name)
-                                    .font(.headline)
-                                Text(result.App.Path)
-                                    .font(.caption)
-                                    .foregroundColor(.secondary)
-                                    .lineLimit(1)
-                            }
-                            Spacer()
-                        }
-                        .padding(.vertical, 8)
-                        .padding(.horizontal, 12)
-                        .background(
-                            RoundedRectangle(cornerRadius: 8)
-                                .fill(selectedIndex == index || hoveredIndex == index ? Color.accentColor.opacity(0.2) : Color.clear)
-                        )
-                        .id(index)
-                        .onHover { isHovered in
-                            hoveredIndex = isHovered ? index : nil
-                        }
-                        .onTapGesture {
-                            executeSelection(result)
+                ScrollView {
+                    LazyVStack(spacing: 2) {
+                        ForEach(Array(searchService.results.enumerated()), id: \.offset) { index, result in
+                            ResultRow(result: result, isSelected: selectedIndex == index, isHovered: hoveredIndex == index)
+                                .onHover { isHovered in
+                                    hoveredIndex = isHovered ? index : nil
+                                }
+                                .onTapGesture {
+                                    executeSelection(result)
+                                }
+                                .id(index)
                         }
                     }
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 4)
                 }
-                .listStyle(.plain)
+                .scrollIndicators(.hidden)
                 .onChange(of: selectedIndex) { _ in
                     proxy.scrollTo(selectedIndex, anchor: .center)
                 }
@@ -131,6 +108,45 @@ struct ContentView: View {
         let url = URL(fileURLWithPath: result.App.Path)
         NSWorkspace.shared.open(url)
         NSApp.hide(nil)
+    }
+}
+
+struct ResultRow: View {
+    let result: AppResult
+    let isSelected: Bool
+    let isHovered: Bool
+    
+    var body: some View {
+        HStack(spacing: 12) {
+            if let nsImage = IconManager.shared.icon(for: result.App.IconPath) {
+                Image(nsImage: nsImage)
+                    .resizable()
+                    .frame(width: 24, height: 24)
+            } else {
+                Image(systemName: "app.fill")
+                    .resizable()
+                    .frame(width: 24, height: 24)
+                    .foregroundColor(.secondary)
+            }
+            
+            VStack(alignment: .leading, spacing: 1) {
+                Text(result.App.Name)
+                    .font(.system(size: 14, weight: isSelected ? .semibold : .regular))
+                    .foregroundColor(isSelected ? .white : .primary)
+                Text(result.App.Path)
+                    .font(.system(size: 10))
+                    .foregroundColor(isSelected ? .white.opacity(0.7) : .secondary)
+                    .lineLimit(1)
+            }
+            Spacer()
+        }
+        .padding(.vertical, 6)
+        .padding(.horizontal, 10)
+        .background(
+            RoundedRectangle(cornerRadius: 6)
+                .fill(isSelected ? Color.accentColor : (isHovered ? Color.primary.opacity(0.05) : Color.clear))
+        )
+        .contentShape(Rectangle()) // Makes the whole row clickable
     }
 }
 
