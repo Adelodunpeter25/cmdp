@@ -23,9 +23,6 @@ struct ContentView: View {
                         searchService.search(query: searchText)
                         selectedIndex = 0 // Reset selection on new search
                     }
-                    .onKeyDown { event in
-                        handleKeyDown(event)
-                    }
                 
                 if !searchText.isEmpty {
                     Button(action: { searchText = "" }) {
@@ -93,27 +90,39 @@ struct ContentView: View {
         .onAppear {
             isSearchFieldFocused = true
             searchService.search(query: "")
+            setupKeyEventMonitor()
         }
     }
 
-    func handleKeyDown(_ event: NSEvent) {
-        switch event.keyCode {
-        case 125: // Down
-            if selectedIndex < searchService.results.count - 1 {
-                selectedIndex += 1
+    func setupKeyEventMonitor() {
+        NSEvent.addLocalMonitorForEvents(matching: .keyDown) { event in
+            // Only handle if this window is key
+            guard let keyWindow = NSApp.keyWindow, keyWindow.contentView?.closestHostingView() != nil else {
+                return event
             }
-        case 126: // Up
-            if selectedIndex > 0 {
-                selectedIndex -= 1
+            
+            switch event.keyCode {
+            case 125: // Down
+                if selectedIndex < searchService.results.count - 1 {
+                    selectedIndex += 1
+                }
+                return nil // Consume event
+            case 126: // Up
+                if selectedIndex > 0 {
+                    selectedIndex -= 1
+                }
+                return nil // Consume event
+            case 36: // Enter
+                if selectedIndex < searchService.results.count {
+                    executeSelection(searchService.results[selectedIndex])
+                }
+                return nil // Consume event
+            case 53: // Escape
+                NSApp.hide(nil)
+                return nil // Consume event
+            default:
+                return event
             }
-        case 36: // Enter
-            if selectedIndex < searchService.results.count {
-                executeSelection(searchService.results[selectedIndex])
-            }
-        case 53: // Escape
-            NSApp.hide(nil)
-        default:
-            break
         }
     }
 
@@ -125,32 +134,13 @@ struct ContentView: View {
     }
 }
 
-// Extension to handle key events on the TextField
-extension View {
-    func onKeyDown(perform action: @escaping (NSEvent) -> Void) -> some View {
-        self.background(KeyEventView(action: action))
-    }
-}
-
-struct KeyEventView: NSViewRepresentable {
-    let action: (NSEvent) -> Void
-
-    func makeNSView(context: Context) -> NSView {
-        let view = KeyView()
-        view.action = action
-        return view
-    }
-
-    func updateNSView(_ nsView: NSView, context: Context) {}
-
-    class KeyView: NSView {
-        var action: ((NSEvent) -> Void)?
-
-        override var acceptsFirstResponder: Bool { true }
-
-        override func keyDown(with event: NSEvent) {
-            action?(event)
+// Helper to check if the view is in the active window
+extension NSView {
+    func closestHostingView() -> NSView? {
+        if self.className.contains("HostingView") {
+            return self
         }
+        return self.superview?.closestHostingView()
     }
 }
 
