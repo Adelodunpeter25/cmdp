@@ -1,5 +1,12 @@
 // swift-tools-version: 5.9
+import Foundation
 import PackageDescription
+
+let packageDirectory = URL(fileURLWithPath: #filePath).deletingLastPathComponent().path
+let daemonBuildDirectory = URL(fileURLWithPath: packageDirectory)
+    .appendingPathComponent("../daemon/build")
+    .standardizedFileURL
+    .path
 
 let package = Package(
     name: "cmdp",
@@ -26,7 +33,7 @@ let package = Package(
                 .product(name: "HotKey", package: "HotKey")
             ],
             linkerSettings: [
-                .unsafeFlags(["-L../daemon/build", "-lsearch"])
+                .unsafeFlags(["-L\(daemonBuildDirectory)", "-lsearch"])
             ]
         ),
         .testTarget(
