@@ -13,7 +13,7 @@ struct ContentView: View {
             HStack {
                 Image(systemName: "magnifyingglass")
                     .font(.title2)
-                    .foregroundColor(.gray)
+                    .foregroundColor(Theme.searchIconColor)
                 
                 TextField("Search apps and folders...", text: $searchText)
                     .textFieldStyle(.plain)
@@ -27,26 +27,29 @@ struct ContentView: View {
                 if !searchText.isEmpty {
                     Button(action: { searchText = "" }) {
                         Image(systemName: "xmark.circle.fill")
-                            .foregroundColor(.gray)
+                            .foregroundColor(Theme.searchIconColor)
                     }
                     .buttonStyle(.plain)
                 }
             }
             .padding()
-            .background(Color(NSColor.windowBackgroundColor).opacity(0.8))
+            .background(Theme.windowBackground)
             
             Divider()
 
             // Results Area
             ScrollViewReader { proxy in
                 ScrollView {
-                    LazyVStack(spacing: 2) {
+                    LazyVStack(spacing: Theme.rowSpacing) {
                         ForEach(Array(searchService.results.enumerated()), id: \.offset) { index, result in
                             ResultRow(result: result, isSelected: selectedIndex == index, isHovered: hoveredIndex == index)
                                 .onHover { isHovered in
                                     hoveredIndex = isHovered ? index : nil
                                 }
                                 .onTapGesture {
+                                    selectedIndex = index
+                                }
+                                .onTapGesture(count: 2) {
                                     executeSelection(result)
                                 }
                                 .id(index)
@@ -63,7 +66,7 @@ struct ContentView: View {
         }
         .frame(width: 600, height: 400)
         .background(VisualEffectView(material: .hudWindow, blendingMode: .behindWindow))
-        .clipShape(RoundedRectangle(cornerRadius: 12))
+        .clipShape(RoundedRectangle(cornerRadius: Theme.windowCornerRadius))
         .onAppear {
             isSearchFieldFocused = true
             searchService.search(query: "")
@@ -121,26 +124,26 @@ struct ResultRow: View {
             if let nsImage = IconManager.shared.icon(for: result.App.IconPath) {
                 Image(nsImage: nsImage)
                     .resizable()
-                    .frame(width: 24, height: 24)
+                    .frame(width: Theme.iconSize, height: Theme.iconSize)
             } else {
                 Image(systemName: "app.fill")
                     .resizable()
-                    .frame(width: 24, height: 24)
-                    .foregroundColor(.secondary)
+                    .frame(width: Theme.iconSize, height: Theme.iconSize)
+                    .foregroundColor(Theme.textSecondary)
             }
             
             VStack(alignment: .leading, spacing: 1) {
                 Text(result.App.Name)
                     .font(.system(size: 14, weight: isSelected ? .semibold : .regular))
-                    .foregroundColor(isSelected ? .white : .primary)
+                    .foregroundColor(isSelected ? Theme.textSelected : Theme.textPrimary)
             }
             Spacer()
         }
-        .padding(.vertical, 6)
-        .padding(.horizontal, 10)
+        .padding(.vertical, Theme.rowPaddingVertical)
+        .padding(.horizontal, Theme.rowPaddingHorizontal)
         .background(
-            RoundedRectangle(cornerRadius: 6)
-                .fill(isSelected ? Color.accentColor : (isHovered ? Color.primary.opacity(0.05) : Color.clear))
+            RoundedRectangle(cornerRadius: Theme.rowCornerRadius)
+                .fill(isSelected ? Theme.selectionBackground : (isHovered ? Theme.hoverBackground : Color.clear))
         )
         .contentShape(Rectangle()) // Makes the whole row clickable
     }
