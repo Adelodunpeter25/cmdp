@@ -1,8 +1,10 @@
 package indexer
 
 import (
+	"os"
 	"log"
 	"path/filepath"
+	"sync"
 
 	"github.com/fsnotify/fsnotify"
 )
@@ -14,6 +16,38 @@ func (m *Manager) Watch() {
 	}
 	defer watcher.Close()
 
+	var watchedMu sync.Mutex
+	watched := make(map[string]struct{})
+
+	addWatch := func(path string) {
+		watchedMu.Lock()
+		if _, exists := watched[path]; exists {
+			watchedMu.Unlock()
+			return
+		}
+		watched[path] = struct{}{}
+		watchedMu.Unlock()
+
+		if err := watcher.Add(path); err != nil {
+			log.Printf("Error watching directory %s: %v", path, err)
+		}
+	}
+
+	addRecursive := func(root string) {
+		err := filepath.Walk(root, func(path string, info os.FileInfo, err error) error {
+			if err != nil {
+				return nil
+			}
+			if info.IsDir() {
+				addWatch(path)
+			}
+			return nil
+		})
+		if err != nil {
+			log.Printf("Error walking directory %s: %v", root, err)
+		}
+	}
+
 	done := make(chan bool)
 	go func() {
 		for {
@@ -22,9 +56,12 @@ func (m *Manager) Watch() {
 				if !ok {
 					return
 				}
-				// If something changes in the watched folders, trigger a refresh
-				// We filter for .app movements or deletions
-				if filepath.Ext(event.Name) == ".app" || event.Op&fsnotify.Write == fsnotify.Write {
+				if event.Op&fsnotify.Create == fsnotify.Create {
+					if info, err := os.Stat(event.Name); err == nil && info.IsDir() {
+						addRecursive(event.Name)
+					}
+				}
+				if event.Op&(fsnotify.Create|fsnotify.Write|fsnotify.Remove|fsnotify.Rename) != 0 {
 					log.Printf("Filesystem change detected: %s, refreshing index...", event.Name)
 					m.refresh()
 				}
@@ -38,10 +75,7 @@ func (m *Manager) Watch() {
 	}()
 
 	for _, dir := range m.dirs {
-		err = watcher.Add(dir)
-		if err != nil {
-			log.Printf("Error watching directory %s: %v", dir, err)
-		}
+		addRecursive(dir)
 	}
 	<-done
 }
