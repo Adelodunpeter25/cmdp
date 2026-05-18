@@ -3,6 +3,7 @@ import SwiftUI
 struct ContentView: View {
     @StateObject private var searchService = SearchService()
     @State private var searchText: String = ""
+    @FocusState private var isSearchFieldFocused: Bool
 
     var body: some View {
         VStack(spacing: 0) {
@@ -15,8 +16,9 @@ struct ContentView: View {
                 TextField("Search apps and folders...", text: $searchText)
                     .textFieldStyle(.plain)
                     .font(.title2)
-                    .onChange(of: searchText) { newValue in
-                        searchService.search(query: newValue)
+                    .focused($isSearchFieldFocused)
+                    .onChange(of: searchText) { _ in
+                        searchService.search(query: searchText)
                     }
                 
                 if !searchText.isEmpty {
@@ -67,6 +69,7 @@ struct ContentView: View {
         .background(VisualEffectView(material: .hudWindow, blendingMode: .behindWindow))
         .clipShape(RoundedRectangle(cornerRadius: 12))
         .onAppear {
+            isSearchFieldFocused = true
             // Optional: Initial search to show all apps
             searchService.search(query: "")
         }
