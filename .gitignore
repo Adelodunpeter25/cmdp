@@ -22,3 +22,14 @@ vendor/
 .cmdp.db
 *.db
 *.db-journal
+
+# Swift
+.build/
+Packages/
+Package.resolved
+*.xcodeproj
+.swiftpm/
+
+# Project specific
+daemon/build/
+cmdp/.build/

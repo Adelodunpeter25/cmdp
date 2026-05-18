@@ -1,4 +1,0 @@
-module CLibSearch {
-    umbrella "/Users/techclub/Public/projects/cmdp/cmdp/Sources/CLibSearch/include"
-    export *
-}
