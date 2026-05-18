@@ -5,6 +5,14 @@ class SpotlightWindow: NSWindow {
     override var canBecomeKey: Bool {
         return true
     }
+    
+    override func keyDown(with event: NSEvent) {
+        if event.keyCode == 53 { // Escape
+            NSApp.hide(nil)
+        } else {
+            super.keyDown(with: event)
+        }
+    }
 }
 
 class AppDelegate: NSObject, NSApplicationDelegate {
