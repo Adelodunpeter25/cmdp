@@ -1,9 +1,10 @@
 package indexer
 
 import (
-	"os"
 	"log"
+	"os"
 	"path/filepath"
+	"strings"
 	"sync"
 
 	"github.com/fsnotify/fsnotify"
@@ -40,6 +41,9 @@ func (m *Manager) Watch() {
 			}
 			if info.IsDir() {
 				addWatch(path)
+				if strings.HasSuffix(path, ".app") && path != root {
+					return filepath.SkipDir
+				}
 			}
 			return nil
 		})
