@@ -24,7 +24,7 @@ func OpenDB(path string) (*DB, error) {
 		last_opened DATETIME,
 		frequency INTEGER DEFAULT 0
 	);`
-	
+
 	_, err = db.Exec(query)
 	if err != nil {
 		return nil, err
@@ -39,8 +39,15 @@ func (db *DB) SaveApps(apps []App) error {
 		return err
 	}
 
-	stmt, err := tx.Prepare("INSERT OR REPLACE INTO apps(path, name, icon_path) VALUES(?, ?, ?)")
+	stmt, err := tx.Prepare(`
+		INSERT INTO apps(path, name, icon_path)
+		VALUES(?, ?, ?)
+		ON CONFLICT(path) DO UPDATE SET
+			name = excluded.name,
+			icon_path = excluded.icon_path
+	`)
 	if err != nil {
+		tx.Rollback()
 		return err
 	}
 	defer stmt.Close()
