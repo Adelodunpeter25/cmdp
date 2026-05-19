@@ -13,40 +13,41 @@ struct ContentView: View {
             // Search Bar
             HStack {
                 Image(systemName: "magnifyingglass")
-                    .font(.title2)
+                    .font(.system(size: 22, weight: .light))
                     .foregroundColor(Theme.searchIconColor)
+                    .padding(.leading, 4)
                 
                 TextField("Search apps and folders...", text: $searchText)
                     .textFieldStyle(.plain)
-                    .font(.title2)
+                    .font(.system(size: 22, weight: .light))
                     .focused($isSearchFieldFocused)
-                    .onChange(of: searchText) { _ in
+                    .onChange(of: searchText) { newValue in
                         searchDebounceItem?.cancel()
                         let item = DispatchWorkItem {
-                            searchService.search(query: searchText)
+                            searchService.search(query: newValue)
                             selectedIndex = 0
+                            updateWindowSize()
                         }
                         searchDebounceItem = item
-                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1, execute: item)
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.05, execute: item)
                     }
                 
                 if !searchText.isEmpty {
-                    Button(action: { searchText = "" }) {
+                    Button(action: { clearSearch() }) {
                         Image(systemName: "xmark.circle.fill")
                             .foregroundColor(Theme.searchIconColor)
                     }
                     .buttonStyle(.plain)
                 }
             }
-            .padding()
+            .padding(.horizontal, 16)
+            .padding(.vertical, 18)
             .background(Theme.windowBackground)
-            
-            Divider()
 
             // Results Area
-            if searchText.isEmpty {
-                EmptyStateView()
-            } else {
+            if !searchText.isEmpty {
+                Divider()
+                
                 ScrollViewReader { proxy in
                     ScrollView {
                         LazyVStack(spacing: Theme.rowSpacing) {
@@ -66,21 +67,46 @@ struct ContentView: View {
                             }
                         }
                         .padding(.horizontal, 8)
-                        .padding(.vertical, 4)
+                        .padding(.vertical, 8)
                     }
+                    .frame(maxHeight: 400)
                     .scrollIndicators(.hidden)
                     .onChange(of: selectedIndex) { _ in
                         proxy.scrollTo(selectedIndex, anchor: .center)
                     }
                 }
+                .transition(.opacity)
             }
         }
-        .frame(width: 600, height: 400)
+        .frame(width: 600)
         .background(VisualEffectView(material: .hudWindow, blendingMode: .behindWindow))
         .clipShape(RoundedRectangle(cornerRadius: Theme.windowCornerRadius))
         .onAppear {
             isSearchFieldFocused = true
             setupKeyEventMonitor()
+            updateWindowSize()
+        }
+        .onChange(of: searchService.results) { _ in
+            updateWindowSize()
+        }
+    }
+
+    private func updateWindowSize() {
+        // Small delay to let SwiftUI layout pass finish
+        DispatchQueue.main.async {
+            guard let window = NSApp.windows.first(where: { $0 is SpotlightWindow }) else { return }
+            
+            let hostingView = window.contentView as? NSHostingView<ContentView>
+            let targetSize = hostingView?.fittingSize ?? CGSize(width: 600, height: 80)
+            
+            var newFrame = window.frame
+            let heightDifference = targetSize.height - newFrame.size.height
+            
+            if abs(heightDifference) > 0.1 {
+                newFrame.size.height = targetSize.height
+                newFrame.origin.y -= heightDifference // Expand downwards by moving origin up (macOS coords)
+                window.setFrame(newFrame, display: true, animate: true)
+            }
         }
     }
 

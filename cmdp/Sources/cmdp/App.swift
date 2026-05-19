@@ -24,17 +24,23 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         let contentView = ContentView()
 
         window = SpotlightWindow(
-            contentRect: NSRect(x: 0, y: 0, width: 600, height: 400),
+            contentRect: NSRect(x: 0, y: 0, width: 600, height: 80),
             styleMask: [.fullSizeContentView, .borderless],
             backing: .buffered, defer: false)
         
         window?.setFrameAutosaveName("Main Window")
         
-        // If no saved position, center it once
+        let hostingView = NSHostingView(rootView: contentView)
+        window?.contentView = hostingView
+        
+        // Allow the window to resize based on its content (the SwiftUI view)
+        window?.setContentSize(hostingView.fittingSize)
+        
+        // Re-center if it's the first run
         if window?.frame.origin.x == 0 && window?.frame.origin.y == 0 {
             window?.center()
         }
-        window?.contentView = NSHostingView(rootView: contentView)
+
         window?.isMovableByWindowBackground = true
         window?.backgroundColor = .clear
         window?.isOpaque = false
@@ -42,6 +48,9 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         
         // Ensure it stays on top like Spotlight
         window?.level = .floating
+        
+        // Set collection behavior to appear on all spaces and in front of full-screen apps
+        window?.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary]
         
         // Initialize HotKey Service
         hotKeyService = HotKeyService(window: window)
