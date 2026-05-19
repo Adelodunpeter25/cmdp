@@ -6,6 +6,7 @@ struct ContentView: View {
     @State private var selectedIndex: Int = 0
     @State private var hoveredIndex: Int? = nil
     @FocusState private var isSearchFieldFocused: Bool
+    @State private var searchDebounceItem: DispatchWorkItem?
 
     var body: some View {
         VStack(spacing: 0) {
@@ -20,8 +21,13 @@ struct ContentView: View {
                     .font(.title2)
                     .focused($isSearchFieldFocused)
                     .onChange(of: searchText) { _ in
-                        searchService.search(query: searchText)
-                        selectedIndex = 0 // Reset selection on new search
+                        searchDebounceItem?.cancel()
+                        let item = DispatchWorkItem {
+                            searchService.search(query: searchText)
+                            selectedIndex = 0
+                        }
+                        searchDebounceItem = item
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1, execute: item)
                     }
                 
                 if !searchText.isEmpty {
