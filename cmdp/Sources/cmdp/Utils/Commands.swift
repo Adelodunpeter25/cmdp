@@ -29,13 +29,13 @@ struct Command: Identifiable, Equatable {
             id: "lock",
             name: "Lock Screen",
             iconName: "lock.fill",
-            script: "tell application \"System Events\" to log out" // Standard logout/lock
+            script: "tell application \"System Events\" to keystroke \"q\" using {command down, control down}"
         ),
         Command(
             id: "empty-trash",
             name: "Empty Trash",
             iconName: "trash",
-            script: "tell application \"Finder\" to empty trash"
+            script: "tell application \"Finder\" to empty trash without confirmations"
         )
     ]
 }
