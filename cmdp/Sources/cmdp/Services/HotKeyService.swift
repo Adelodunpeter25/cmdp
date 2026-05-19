@@ -11,8 +11,8 @@ class HotKeyService {
     }
 
     private func setupHotKey() {
-        // Register Cmd + P (Key code 35 is 'P')
-        hotKey = HotKey(key: .p, modifiers: [.command])
+        // Register Cmd + Space
+        hotKey = HotKey(key: .space, modifiers: [.command])
         
         hotKey?.keyDownHandler = { [weak self] in
             self?.toggleWindow()
