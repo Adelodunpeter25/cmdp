@@ -22,6 +22,18 @@ class SearchService: ObservableObject {
         }
 
         let isCmdMode = query.hasPrefix(">")
+        
+        // Update mode and clear irrelevant results immediately on the main thread
+        // to prevent stale data from showing during the transition.
+        DispatchQueue.main.async {
+            self.isCommandMode = isCmdMode
+            if isCmdMode {
+                self.results = []
+            } else {
+                self.commandResults = []
+            }
+        }
+
         let searchText = isCmdMode ? String(query.dropFirst()).trimmingCharacters(in: .whitespaces) : query
 
         searchQueue.async { [weak self] in
@@ -49,7 +61,6 @@ class SearchService: ObservableObject {
             guard shouldPublish else { return }
 
             DispatchQueue.main.async {
-                self.isCommandMode = isCmdMode
                 self.results = searchResults
                 self.commandResults = cmdResults
             }
