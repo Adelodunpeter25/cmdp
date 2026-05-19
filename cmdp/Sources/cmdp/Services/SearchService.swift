@@ -3,6 +3,9 @@ import CLibSearch
 
 class SearchService: ObservableObject {
     @Published var results: [AppResult] = []
+    @Published var commandResults: [Command] = []
+    @Published var isCommandMode: Bool = false
+    
     private let searchQueue = DispatchQueue(label: "cmdp.search.queue", qos: .userInitiated)
     private let stateQueue = DispatchQueue(label: "cmdp.search.state")
     private var searchRevision: Int = 0
@@ -18,11 +21,26 @@ class SearchService: ObservableObject {
             return searchRevision
         }
 
-        let searchText = query
+        let isCmdMode = query.hasPrefix(">")
+        let searchText = isCmdMode ? String(query.dropFirst()).trimmingCharacters(in: .whitespaces) : query
+
         searchQueue.async { [weak self] in
             guard let self else { return }
 
-            let searchResults = self.performSearch(query: searchText)
+            var searchResults: [AppResult] = []
+            var cmdResults: [Command] = []
+
+            if isCmdMode {
+                if searchText.isEmpty {
+                    cmdResults = Command.allCommands
+                } else {
+                    cmdResults = Command.allCommands.filter { 
+                        $0.name.lowercased().contains(searchText.lowercased()) 
+                    }
+                }
+            } else {
+                searchResults = self.performSearch(query: searchText)
+            }
 
             let shouldPublish = self.stateQueue.sync {
                 revision == self.searchRevision
@@ -31,7 +49,9 @@ class SearchService: ObservableObject {
             guard shouldPublish else { return }
 
             DispatchQueue.main.async {
+                self.isCommandMode = isCmdMode
                 self.results = searchResults
+                self.commandResults = cmdResults
             }
         }
     }

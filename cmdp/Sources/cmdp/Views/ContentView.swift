@@ -12,9 +12,9 @@ struct ContentView: View {
         VStack(spacing: 0) {
             // Search Bar
             HStack {
-                Image(systemName: "magnifyingglass")
+                Image(systemName: searchService.isCommandMode ? "chevron.right.square.fill" : "magnifyingglass")
                     .font(.system(size: 22, weight: .light))
-                    .foregroundColor(Theme.searchIconColor)
+                    .foregroundColor(searchService.isCommandMode ? .blue : Theme.searchIconColor)
                     .padding(.leading, 4)
                 
                 TextField("Search apps and folders...", text: $searchText)
@@ -45,25 +45,42 @@ struct ContentView: View {
             .background(Theme.windowBackground)
 
             // Results Area
-            if !searchText.isEmpty && !searchService.results.isEmpty {
+            if !searchText.isEmpty && (!searchService.results.isEmpty || !searchService.commandResults.isEmpty) {
                 Divider()
                 
                 ScrollViewReader { proxy in
                     ScrollView {
                         LazyVStack(spacing: Theme.rowSpacing) {
-                            ForEach(Array(searchService.results.enumerated()), id: \.offset) { index, result in
-                                ResultRow(result: result, isSelected: selectedIndex == index, isHovered: hoveredIndex == index)
-                                    .onHover { isHovered in
-                                        hoveredIndex = isHovered ? index : nil
-                                    }
-                                    .onTapGesture {
-                                        if selectedIndex == index {
-                                            executeSelection(result)
-                                        } else {
-                                            selectedIndex = index
+                            if searchService.isCommandMode {
+                                ForEach(Array(searchService.commandResults.enumerated()), id: \.offset) { index, command in
+                                    CommandRow(command: command, isSelected: selectedIndex == index, isHovered: hoveredIndex == index)
+                                        .onHover { isHovered in
+                                            hoveredIndex = isHovered ? index : nil
                                         }
-                                    }
-                                    .id(index)
+                                        .onTapGesture {
+                                            if selectedIndex == index {
+                                                executeCommand(command)
+                                            } else {
+                                                selectedIndex = index
+                                            }
+                                        }
+                                        .id(index)
+                                }
+                            } else {
+                                ForEach(Array(searchService.results.enumerated()), id: \.offset) { index, result in
+                                    ResultRow(result: result, isSelected: selectedIndex == index, isHovered: hoveredIndex == index)
+                                        .onHover { isHovered in
+                                            hoveredIndex = isHovered ? index : nil
+                                        }
+                                        .onTapGesture {
+                                            if selectedIndex == index {
+                                                executeSelection(result)
+                                            } else {
+                                                selectedIndex = index
+                                            }
+                                        }
+                                        .id(index)
+                                }
                             }
                         }
                         .padding(.horizontal, 8)
@@ -88,6 +105,9 @@ struct ContentView: View {
             setupNotificationObservers()
         }
         .onChange(of: searchService.results) { _ in
+            updateWindowSize()
+        }
+        .onChange(of: searchService.commandResults) { _ in
             updateWindowSize()
         }
     }
@@ -135,9 +155,11 @@ struct ContentView: View {
                 return event
             }
             
+            let resultCount = searchService.isCommandMode ? searchService.commandResults.count : searchService.results.count
+
             switch event.keyCode {
             case 125: // Down
-                if selectedIndex < searchService.results.count - 1 {
+                if selectedIndex < resultCount - 1 {
                     selectedIndex += 1
                 }
                 return nil // Consume event
@@ -147,8 +169,14 @@ struct ContentView: View {
                 }
                 return nil // Consume event
             case 36: // Enter
-                if selectedIndex < searchService.results.count {
-                    executeSelection(searchService.results[selectedIndex])
+                if searchService.isCommandMode {
+                    if selectedIndex < searchService.commandResults.count {
+                        executeCommand(searchService.commandResults[selectedIndex])
+                    }
+                } else {
+                    if selectedIndex < searchService.results.count {
+                        executeSelection(searchService.results[selectedIndex])
+                    }
                 }
                 return nil // Consume event
             case 53: // Escape
@@ -175,6 +203,41 @@ struct ContentView: View {
         let url = URL(fileURLWithPath: result.App.Path)
         NSWorkspace.shared.open(url)
         NSApp.hide(nil)
+    }
+
+    func executeCommand(_ command: Command) {
+        CommandService.shared.execute(command)
+        NSApp.hide(nil)
+    }
+}
+
+struct CommandRow: View {
+    let command: Command
+    let isSelected: Bool
+    let isHovered: Bool
+    
+    var body: some View {
+        HStack(spacing: 12) {
+            Image(systemName: command.iconName)
+                .resizable()
+                .aspectRatio(contentMode: .fit)
+                .frame(width: Theme.iconSize - 4, height: Theme.iconSize - 4)
+                .foregroundColor(isSelected ? Theme.textSelected : .blue)
+                .padding(4)
+            
+            Text(command.name)
+                .font(.system(size: 14, weight: isSelected ? .semibold : .regular))
+                .foregroundColor(isSelected ? Theme.textSelected : Theme.textPrimary)
+            
+            Spacer()
+        }
+        .padding(.vertical, Theme.rowPaddingVertical)
+        .padding(.horizontal, Theme.rowPaddingHorizontal)
+        .background(
+            RoundedRectangle(cornerRadius: Theme.rowCornerRadius)
+                .fill(isSelected ? Color.blue : (isHovered ? Theme.hoverBackground : Color.clear))
+        )
+        .contentShape(Rectangle())
     }
 }
 
