@@ -35,7 +35,7 @@ struct Command: Identifiable, Equatable {
             id: "empty-trash",
             name: "Empty Trash",
             iconName: "trash",
-            script: "tell application \"Finder\" to empty trash without confirmations"
+            script: "tell application \"Finder\"\nif (count of items in trash) > 0 then\nempty trash\nend if\nend tell"
         )
     ]
 }
