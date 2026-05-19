@@ -24,7 +24,7 @@ class CommandService {
                 script.executeAndReturnError(&error)
 
                 if let err = error {
-                    let errNumber = err[NSAppleScriptErrorNumber] as? Int ?? 0
+                    let errNumber = err[NSAppleScript.errorNumber] as? Int ?? 0
                     print("CommandService: AppleScript Error: \(err)")
 
                     if errNumber == errAEEventNotPermitted {
