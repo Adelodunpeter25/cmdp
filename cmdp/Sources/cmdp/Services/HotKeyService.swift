@@ -2,21 +2,28 @@ import AppKit
 import HotKey
 
 class HotKeyService {
-    private var hotKey: HotKey?
+    private var hotKeys: [HotKey] = []
     private var window: NSWindow?
 
     init(window: NSWindow?) {
         self.window = window
-        setupHotKey()
+        setupHotKeys()
     }
 
-    private func setupHotKey() {
+    private func setupHotKeys() {
         // Register Cmd + Space
-        hotKey = HotKey(key: .space, modifiers: [.command])
-        
-        hotKey?.keyDownHandler = { [weak self] in
+        let spaceHotKey = HotKey(key: .space, modifiers: [.command])
+        spaceHotKey.keyDownHandler = { [weak self] in
             self?.toggleWindow()
         }
+        
+        // Register Cmd + P
+        let pHotKey = HotKey(key: .p, modifiers: [.command])
+        pHotKey.keyDownHandler = { [weak self] in
+            self?.toggleWindow()
+        }
+
+        hotKeys = [spaceHotKey, pHotKey]
     }
 
     func toggleWindow() {
