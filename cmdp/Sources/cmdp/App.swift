@@ -60,6 +60,9 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         
         // Activate the app
         NSApp.activate(ignoringOtherApps: true)
+
+        // Check Apple Events permission for system commands
+        CommandService.shared.checkAppleEventsPermission()
     }
 }
 
