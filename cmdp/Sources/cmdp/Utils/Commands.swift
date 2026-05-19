@@ -11,25 +11,25 @@ struct Command: Identifiable, Equatable {
             id: "sleep",
             name: "Sleep",
             iconName: "moon.fill",
-            script: "tell application \"System Events\" to sleep"
+            script: "tell application \"Finder\" to sleep"
         ),
         Command(
             id: "restart",
             name: "Restart...",
             iconName: "arrow.clockwise",
-            script: "tell application \"System Events\" to restart"
+            script: "tell application \"Finder\" to restart"
         ),
         Command(
             id: "shutdown",
             name: "Shut Down...",
             iconName: "power",
-            script: "tell application \"System Events\" to shut down"
+            script: "tell application \"Finder\" to shut down"
         ),
         Command(
             id: "lock",
             name: "Lock Screen",
             iconName: "lock.fill",
-            script: "tell application \"System Events\" to keystroke \"q\" using {control down, command down}"
+            script: "do shell script \"/usr/bin/pmset displaysleepnow\""
         ),
         Command(
             id: "empty-trash",
