@@ -45,7 +45,7 @@ struct ContentView: View {
             .background(Theme.windowBackground)
 
             // Results Area
-            if !searchText.isEmpty {
+            if !searchText.isEmpty && !searchService.results.isEmpty {
                 Divider()
                 
                 ScrollViewReader { proxy in
@@ -83,11 +83,29 @@ struct ContentView: View {
         .clipShape(RoundedRectangle(cornerRadius: Theme.windowCornerRadius))
         .onAppear {
             isSearchFieldFocused = true
-            setupKeyEventMonitor()
             updateWindowSize()
+            setupKeyEventMonitor()
+            setupNotificationObservers()
         }
         .onChange(of: searchService.results) { _ in
             updateWindowSize()
+        }
+    }
+
+    private func setupNotificationObservers() {
+        NotificationCenter.default.addObserver(forName: NSWindow.didBecomeKeyNotification, object: nil, queue: .main) { _ in
+            self.selectAllSearchText()
+        }
+    }
+
+    private func selectAllSearchText() {
+        isSearchFieldFocused = true
+        // Small delay to ensure the field is focused before selecting
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.01) {
+            if let window = NSApp.keyWindow,
+               let textField = window.firstResponder as? NSTextView {
+                textField.selectAll(nil)
+            }
         }
     }
 
