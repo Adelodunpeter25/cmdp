@@ -29,7 +29,7 @@ struct Command: Identifiable, Equatable {
             id: "lock",
             name: "Lock Screen",
             iconName: "lock.fill",
-            script: "tell application \"System Events\" to keystroke \"q\" using {command down, control down}"
+            script: "tell application \"System Events\" to keystroke \"q\" using {control down, command down}"
         ),
         Command(
             id: "empty-trash",
