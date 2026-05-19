@@ -48,6 +48,8 @@ cat <<PLIST > "${BUNDLE_PATH}/Contents/Info.plist"
     <string>13.0</string>
     <key>LSUIElement</key>
     <true/>
+    <key>NSAppleEventsUsageDescription</key>
+    <string>cmdp needs to control System Events to perform actions like Sleep, Restart, and Shut Down.</string>
 </dict>
 </plist>
 PLIST

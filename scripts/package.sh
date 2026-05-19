@@ -52,6 +52,8 @@ cat <<PLIST > "${APP_NAME}.app/Contents/Info.plist"
     <true/>
     <key>NSHighResolutionCapable</key>
     <true/>
+    <key>NSAppleEventsUsageDescription</key>
+    <string>cmdp needs to control System Events to perform actions like Sleep, Restart, and Shut Down.</string>
 </dict>
 </plist>
 PLIST
