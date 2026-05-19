@@ -24,7 +24,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         let contentView = ContentView()
 
         window = SpotlightWindow(
-            contentRect: NSRect(x: 0, y: 0, width: 600, height: 80),
+            contentRect: NSRect(x: 0, y: 0, width: 600, height: 64),
             styleMask: [.fullSizeContentView, .borderless],
             backing: .buffered, defer: false)
         

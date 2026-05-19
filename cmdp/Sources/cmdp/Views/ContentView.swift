@@ -41,7 +41,7 @@ struct ContentView: View {
                 }
             }
             .padding(.horizontal, 16)
-            .padding(.vertical, 18)
+            .padding(.vertical, 12)
             .background(Theme.windowBackground)
 
             // Results Area
@@ -69,7 +69,7 @@ struct ContentView: View {
                         .padding(.horizontal, 8)
                         .padding(.vertical, 8)
                     }
-                    .frame(maxHeight: 400)
+                    .frame(maxHeight: 350)
                     .scrollIndicators(.hidden)
                     .onChange(of: selectedIndex) { _ in
                         proxy.scrollTo(selectedIndex, anchor: .center)
@@ -97,7 +97,7 @@ struct ContentView: View {
             guard let window = NSApp.windows.first(where: { $0 is SpotlightWindow }) else { return }
             
             let hostingView = window.contentView as? NSHostingView<ContentView>
-            let targetSize = hostingView?.fittingSize ?? CGSize(width: 600, height: 80)
+            let targetSize = hostingView?.fittingSize ?? CGSize(width: 600, height: 60)
             
             var newFrame = window.frame
             let heightDifference = targetSize.height - newFrame.size.height
