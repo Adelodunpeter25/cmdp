@@ -140,8 +140,12 @@ struct ContentView: View {
     private func groupResults(_ results: [SearchResult]) -> [ResultGroup] {
         var appItems: [SearchResult] = []
         var folderItems: [SearchResult] = []
+        var seenPaths = Set<String>()
         
         for result in results {
+            if seenPaths.contains(result.Item.Path) { continue }
+            seenPaths.insert(result.Item.Path)
+            
             if result.Item.itemType == .app {
                 appItems.append(result)
             } else if result.Item.itemType == .folder {
@@ -151,15 +155,19 @@ struct ContentView: View {
         
         var groups: [ResultGroup] = []
         
-        // Backend order determines which group comes first
-        if let firstResult = results.first {
-            if firstResult.Item.itemType == .app {
+        // Find top type from deduplicated results
+        if let topItem = results.first(where: { seenPaths.contains($0.Item.Path) }) {
+            if topItem.Item.itemType == .app {
                 if !appItems.isEmpty { groups.append(ResultGroup(type: .app, items: appItems)) }
                 if !folderItems.isEmpty { groups.append(ResultGroup(type: .folder, items: folderItems)) }
             } else {
                 if !folderItems.isEmpty { groups.append(ResultGroup(type: .folder, items: folderItems)) }
                 if !appItems.isEmpty { groups.append(ResultGroup(type: .app, items: appItems)) }
             }
+        } else {
+            // Fallback
+            if !appItems.isEmpty { groups.append(ResultGroup(type: .app, items: appItems)) }
+            if !folderItems.isEmpty { groups.append(ResultGroup(type: .folder, items: folderItems)) }
         }
         
         return groups
