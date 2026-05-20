@@ -6,6 +6,7 @@ import (
 	"path/filepath"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/fsnotify/fsnotify"
 )
@@ -91,6 +92,29 @@ func (m *Manager) Watch() {
 		}
 	}
 
+	// Debounced refresh: coalesce rapid-fire FS events into a single refresh.
+	// A burst of events from a single app install (dozens of creates/writes)
+	// collapses into one refresh fired 500ms after the last event.
+	const debounceDelay = 500 * time.Millisecond
+	var debounceTimer *time.Timer
+	var debounceMu sync.Mutex
+
+	scheduleRefresh := func() {
+		debounceMu.Lock()
+		defer debounceMu.Unlock()
+		if debounceTimer != nil {
+			debounceTimer.Reset(debounceDelay)
+		} else {
+			debounceTimer = time.AfterFunc(debounceDelay, func() {
+				log.Println("Manager: Debounced refresh triggered by filesystem event")
+				m.refresh()
+				debounceMu.Lock()
+				debounceTimer = nil
+				debounceMu.Unlock()
+			})
+		}
+	}
+
 	go func() {
 		for {
 			select {
@@ -107,8 +131,8 @@ func (m *Manager) Watch() {
 					}
 				}
 				if event.Op&(fsnotify.Create|fsnotify.Write|fsnotify.Remove|fsnotify.Rename) != 0 {
-					log.Printf("Filesystem change detected: %s, refreshing index...", event.Name)
-					m.refresh()
+					log.Printf("Filesystem change detected: %s, scheduling debounced refresh...", event.Name)
+					scheduleRefresh()
 				}
 			case err, ok := <-watcher.Errors:
 				if !ok {

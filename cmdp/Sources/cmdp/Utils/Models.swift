@@ -20,7 +20,7 @@ struct IndexItem: Codable, Equatable {
     enum CodingKeys: String, CodingKey {
         case Name
         case Path
-        case IconPath
+        case IconPath = "IconPath"
         case itemType = "Type"
     }
 }

@@ -78,9 +78,9 @@ class SearchService: ObservableObject {
             guard let cResult = SearchApps(UnsafeMutablePointer(mutating: cQuery)) else {
                 return
             }
+            defer { free(cResult) }
 
             let jsonString = String(cString: cResult)
-            free(cResult)
 
             guard let data = jsonString.data(using: .utf8) else {
                 return
@@ -97,3 +97,4 @@ class SearchService: ObservableObject {
         return decodedResults
     }
     }
+

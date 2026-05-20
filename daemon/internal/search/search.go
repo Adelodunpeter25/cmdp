@@ -17,10 +17,17 @@ type Result struct {
 
 // Scoring weights
 const (
-	scoreExactMatch   = 10_000
-	scorePrefix       = 5_000
-	scoreAcronym      = 4_000
-	scoreWordPrefix   = 3_000
+	scoreExactMatch = 10_000
+	scorePrefix     = 5_000
+	scoreAcronym    = 4_000
+	scoreWordPrefix = 3_000
+)
+
+// Per-group result caps — limits the number of items sent back over the CGo
+// bridge so Swift doesn't decode/layout hundreds of irrelevant results.
+const (
+	maxAppResults    = 8
+	maxFolderResults = 5
 )
 
 // acronym returns the string formed by the first letter of each word in s.
@@ -124,5 +131,24 @@ func Items(query string, items []indexer.IndexItem) []Result {
 		return strings.ToLower(results[i].Item.Name) < strings.ToLower(results[j].Item.Name)
 	})
 
-	return results
+	// Apply per-group caps: return at most maxAppResults apps and
+	// maxFolderResults folders (both already in score-descending order).
+	var capped []Result
+	appCount, folderCount := 0, 0
+	for _, r := range results {
+		switch r.Item.Type {
+		case indexer.TypeApp:
+			if appCount < maxAppResults {
+				capped = append(capped, r)
+				appCount++
+			}
+		case indexer.TypeFolder:
+			if folderCount < maxFolderResults {
+				capped = append(capped, r)
+				folderCount++
+			}
+		}
+	}
+
+	return capped
 }

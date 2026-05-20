@@ -8,6 +8,15 @@ struct ContentView: View {
     @FocusState private var isSearchFieldFocused: Bool
     @State private var searchDebounceItem: DispatchWorkItem?
 
+    // MARK: - Grouped results (single source of truth for ordering)
+
+    /// Results split into [apps, folders] sections and then flattened in that
+    /// display order.  All index arithmetic uses this array so keyboard
+    /// navigation and the rendered list are always in sync.
+    private var groupedResults: [SearchResult] {
+        groupResults(searchService.results)
+    }
+
     var body: some View {
         VStack(spacing: 0) {
             // Search Bar
@@ -69,11 +78,15 @@ struct ContentView: View {
                                     }
                                 }
                             } else {
-                                let groups = groupResults(searchService.results)
-                                ForEach(groups, id: \.type) { group in
-                                    Section(header: sectionHeader(group.type == .app ? "APPLICATIONS" : "FOLDERS")) {
-                                        ForEach(group.items) { result in
-                                            let index = searchService.results.firstIndex(of: result) ?? 0
+                                // Render sections from the pre-grouped, flattened array.
+                                // groupedDisplay splits the flat array back into sections
+                                // for visual separation while preserving index continuity.
+                                let sections = buildSections(groupedResults)
+                                var runningIndex = 0
+                                ForEach(sections, id: \.type) { section in
+                                    Section(header: sectionHeader(section.type == .app ? "APPLICATIONS" : "FOLDERS")) {
+                                        ForEach(Array(section.items.enumerated()), id: \.element.id) { localIdx, result in
+                                            let index = runningIndex + localIdx
                                             ResultRow(result: result, isSelected: selectedIndex == index, isHovered: hoveredIndex == index)
                                                 .onHover { isHovered in
                                                     hoveredIndex = isHovered ? index : nil
@@ -88,6 +101,9 @@ struct ContentView: View {
                                                 .id(index)
                                         }
                                     }
+                                    // SwiftUI's ForEach closures don't allow mutation;
+                                    // use a dummy view to advance the counter.
+                                    let _ = { runningIndex += section.items.count }()
                                 }
                             }
                         }
@@ -120,6 +136,70 @@ struct ContentView: View {
         }
     }
 
+    // MARK: - Grouping helpers
+
+    private struct ResultSection {
+        let type: ItemType
+        let items: [SearchResult]
+    }
+
+    /// Returns a flat array of results ordered: all apps first (by score),
+    /// then all folders (by score).  This is the canonical display order and
+    /// the source of truth for `selectedIndex`.
+    private func groupResults(_ results: [SearchResult]) -> [SearchResult] {
+        var seen = Set<String>()
+        var apps: [SearchResult] = []
+        var folders: [SearchResult] = []
+
+        for result in results {
+            guard !seen.contains(result.Item.Path) else { continue }
+            seen.insert(result.Item.Path)
+
+            switch result.Item.itemType {
+            case .app:    apps.append(result)
+            case .folder: folders.append(result)
+            }
+        }
+
+        // Determine which group has the top-ranked result to put it first.
+        // Check the first item of each group (they're already score-sorted
+        // by the Go backend) to decide section order.
+        let appTop    = apps.first.map    { $0.Score } ?? Int.min
+        let folderTop = folders.first.map { $0.Score } ?? Int.min
+
+        if folderTop > appTop {
+            return folders + apps
+        } else {
+            return apps + folders
+        }
+    }
+
+    /// Splits the flat grouped array back into sections for visual rendering,
+    /// preserving the ordering from `groupResults`.
+    private func buildSections(_ flat: [SearchResult]) -> [ResultSection] {
+        guard !flat.isEmpty else { return [] }
+
+        var sections: [ResultSection] = []
+        var currentType = flat[0].Item.itemType
+        var currentBatch: [SearchResult] = []
+
+        for result in flat {
+            if result.Item.itemType == currentType {
+                currentBatch.append(result)
+            } else {
+                sections.append(ResultSection(type: currentType, items: currentBatch))
+                currentType = result.Item.itemType
+                currentBatch = [result]
+            }
+        }
+        if !currentBatch.isEmpty {
+            sections.append(ResultSection(type: currentType, items: currentBatch))
+        }
+        return sections
+    }
+
+    // MARK: - Section header
+
     private func sectionHeader(_ title: String) -> some View {
         HStack {
             Text(title)
@@ -132,46 +212,7 @@ struct ContentView: View {
         .background(VisualEffectView(material: .hudWindow, blendingMode: .behindWindow))
     }
 
-    private struct ResultGroup {
-        let type: ItemType
-        let items: [SearchResult]
-    }
-
-    private func groupResults(_ results: [SearchResult]) -> [ResultGroup] {
-        var appItems: [SearchResult] = []
-        var folderItems: [SearchResult] = []
-        var seenPaths = Set<String>()
-        
-        for result in results {
-            if seenPaths.contains(result.Item.Path) { continue }
-            seenPaths.insert(result.Item.Path)
-            
-            if result.Item.itemType == .app {
-                appItems.append(result)
-            } else if result.Item.itemType == .folder {
-                folderItems.append(result)
-            }
-        }
-        
-        var groups: [ResultGroup] = []
-        
-        // Find top type from deduplicated results
-        if let topItem = results.first(where: { seenPaths.contains($0.Item.Path) }) {
-            if topItem.Item.itemType == .app {
-                if !appItems.isEmpty { groups.append(ResultGroup(type: .app, items: appItems)) }
-                if !folderItems.isEmpty { groups.append(ResultGroup(type: .folder, items: folderItems)) }
-            } else {
-                if !folderItems.isEmpty { groups.append(ResultGroup(type: .folder, items: folderItems)) }
-                if !appItems.isEmpty { groups.append(ResultGroup(type: .app, items: appItems)) }
-            }
-        } else {
-            // Fallback
-            if !appItems.isEmpty { groups.append(ResultGroup(type: .app, items: appItems)) }
-            if !folderItems.isEmpty { groups.append(ResultGroup(type: .folder, items: folderItems)) }
-        }
-        
-        return groups
-    }
+    // MARK: - Observers / lifecycle
 
     private func setupNotificationObservers() {
         NotificationCenter.default.addObserver(forName: NSWindow.didBecomeKeyNotification, object: nil, queue: .main) { _ in
@@ -181,7 +222,6 @@ struct ContentView: View {
 
     private func selectAllSearchText() {
         isSearchFieldFocused = true
-        // Small delay to ensure the field is focused before selecting
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.01) {
             if let window = NSApp.keyWindow,
                let textField = window.firstResponder as? NSTextView {
@@ -191,7 +231,6 @@ struct ContentView: View {
     }
 
     private func updateWindowSize() {
-        // Small delay to let SwiftUI layout pass finish
         DispatchQueue.main.async {
             guard let window = NSApp.windows.first(where: { $0 is SpotlightWindow }) else { return }
             
@@ -203,55 +242,61 @@ struct ContentView: View {
             
             if abs(heightDifference) > 0.1 {
                 newFrame.size.height = targetSize.height
-                newFrame.origin.y -= heightDifference // Expand downwards by moving origin up (macOS coords)
+                newFrame.origin.y -= heightDifference
                 window.setFrame(newFrame, display: true, animate: true)
             }
         }
     }
 
+    // MARK: - Key events
+
     func setupKeyEventMonitor() {
         NSEvent.addLocalMonitorForEvents(matching: .keyDown) { event in
-            // Only handle if this window is key
             guard let keyWindow = NSApp.keyWindow, keyWindow.contentView?.closestHostingView() != nil else {
                 return event
             }
-            
-            let resultCount = searchService.isCommandMode ? searchService.commandResults.count : searchService.results.count
+
+            // Use the grouped array count so navigation matches visual order exactly.
+            let resultCount = searchService.isCommandMode
+                ? searchService.commandResults.count
+                : groupedResults.count
 
             switch event.keyCode {
             case 125: // Down
                 if selectedIndex < resultCount - 1 {
                     selectedIndex += 1
                 }
-                return nil // Consume event
+                return nil
             case 126: // Up
                 if selectedIndex > 0 {
                     selectedIndex -= 1
                 }
-                return nil // Consume event
+                return nil
             case 36: // Enter
                 if searchService.isCommandMode {
                     if selectedIndex < searchService.commandResults.count {
                         executeCommand(searchService.commandResults[selectedIndex])
                     }
                 } else {
-                    if selectedIndex < searchService.results.count {
-                        executeSelection(searchService.results[selectedIndex])
+                    if selectedIndex < groupedResults.count {
+                        executeSelection(groupedResults[selectedIndex])
                     }
                 }
-                return nil // Consume event
+                return nil
             case 53: // Escape
                 if searchText.isEmpty {
                     NSApp.hide(nil)
                 } else {
                     clearSearch()
                 }
-                return nil // Consume event
+                return nil
             default:
                 return event
             }
         }
     }
+
+    // MARK: - Actions
 
     private func clearSearch() {
         searchText = ""
@@ -274,6 +319,8 @@ struct ContentView: View {
         NSApp.hide(nil)
     }
 }
+
+// MARK: - Row Views
 
 struct CommandRow: View {
     let command: Command
@@ -349,11 +396,12 @@ struct ResultRow: View {
             RoundedRectangle(cornerRadius: Theme.rowCornerRadius)
                 .fill(isSelected ? Theme.selectionBackground : (isHovered ? Theme.hoverBackground : Color.clear))
         )
-        .contentShape(Rectangle()) // Makes the whole row clickable
+        .contentShape(Rectangle())
     }
 }
 
-// Helper to check if the view is in the active window
+// MARK: - Utilities
+
 extension NSView {
     func closestHostingView() -> NSView? {
         if self.className.contains("HostingView") {
@@ -363,7 +411,6 @@ extension NSView {
     }
 }
 
-// Utility for the blurred background effect
 struct VisualEffectView: NSViewRepresentable {
     let material: NSVisualEffectView.Material
     let blendingMode: NSVisualEffectView.BlendingMode
