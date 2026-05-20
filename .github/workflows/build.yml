@@ -1,0 +1,60 @@
+name: Build macOS DMG
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: Build (${{ matrix.arch }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: macos-13
+            arch: x64
+          - os: macos-14
+            arch: arm64
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: 'daemon/go.mod'
+          cache-dependency-path: 'daemon/go.sum'
+
+      - name: Log Environment Information
+        run: |
+          echo "Xcode Version:"
+          xcodebuild -version
+          echo "Swift Version:"
+          swift --version
+          echo "Go Version:"
+          go version
+
+      - name: Make package script executable
+        run: chmod +x scripts/package.sh
+
+      - name: Run Build and Package
+        run: ./scripts/package.sh
+
+      - name: Rename Artifact by Architecture
+        run: |
+          mv cmdp/cmdp.dmg cmdp-${{ matrix.arch }}.dmg
+          echo "Renamed cmdp/cmdp.dmg to cmdp-${{ matrix.arch }}.dmg"
+
+      - name: Upload DMG Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: cmdp-${{ matrix.arch }}
+          path: cmdp-${{ matrix.arch }}.dmg
+          if-no-files-found: error
