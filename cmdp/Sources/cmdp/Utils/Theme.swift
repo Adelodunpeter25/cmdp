@@ -16,7 +16,7 @@ struct Theme {
     // Layout
     static let windowCornerRadius: CGFloat = 12
     static let rowCornerRadius: CGFloat = 6
-    static let iconSize: CGFloat = 24
+    static let iconSize: CGFloat = 32
     static let rowPaddingVertical: CGFloat = 6
     static let rowPaddingHorizontal: CGFloat = 10
     static let rowSpacing: CGFloat = 2

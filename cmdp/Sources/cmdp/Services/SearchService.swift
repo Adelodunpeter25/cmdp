@@ -2,7 +2,7 @@ import Foundation
 import CLibSearch
 
 class SearchService: ObservableObject {
-    @Published var results: [AppResult] = []
+    @Published var results: [SearchResult] = []
     @Published var commandResults: [Command] = []
     @Published var isCommandMode: Bool = false
     
@@ -39,7 +39,7 @@ class SearchService: ObservableObject {
         searchQueue.async { [weak self] in
             guard let self else { return }
 
-            var searchResults: [AppResult] = []
+            var searchResults: [SearchResult] = []
             var cmdResults: [Command] = []
 
             if isCmdMode {
@@ -67,14 +67,14 @@ class SearchService: ObservableObject {
         }
     }
     
-    func select(app: AppResult) {
-        app.App.Path.withCString { cPath in
+    func select(item: IndexItem) {
+        item.Path.withCString { cPath in
             MarkSelected(UnsafeMutablePointer(mutating: cPath))
         }
     }
 
-    private func performSearch(query: String) -> [AppResult] {
-        var decodedResults: [AppResult] = []
+    private func performSearch(query: String) -> [SearchResult] {
+        var decodedResults: [SearchResult] = []
 
         query.withCString { cQuery in
             guard let cResult = SearchApps(UnsafeMutablePointer(mutating: cQuery)) else {
@@ -90,7 +90,7 @@ class SearchService: ObservableObject {
 
             do {
                 let decoder = JSONDecoder()
-                decodedResults = try decoder.decode([AppResult].self, from: data)
+                decodedResults = try decoder.decode([SearchResult].self, from: data)
             } catch {
                 print("SearchService: Failed to decode JSON: \(error)")
             }

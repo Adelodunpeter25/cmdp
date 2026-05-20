@@ -48,6 +48,15 @@ struct ContentView: View {
             if !searchText.isEmpty && (!searchService.results.isEmpty || !searchService.commandResults.isEmpty) {
                 Divider()
                 
+                HStack {
+                    Text(searchService.isCommandMode ? "COMMANDS" : "TOP HITS")
+                        .font(.system(size: 10, weight: .bold))
+                        .foregroundColor(Theme.textSecondary.opacity(0.8))
+                        .padding(.horizontal, 16)
+                        .padding(.top, 8)
+                    Spacer()
+                }
+
                 ScrollViewReader { proxy in
                     ScrollView {
                         LazyVStack(spacing: Theme.rowSpacing) {
@@ -198,9 +207,9 @@ struct ContentView: View {
         searchService.search(query: "")
     }
 
-    func executeSelection(_ result: AppResult) {
-        searchService.select(app: result)
-        let url = URL(fileURLWithPath: result.App.Path)
+    func executeSelection(_ result: SearchResult) {
+        searchService.select(item: result.Item)
+        let url = URL(fileURLWithPath: result.Item.Path)
         NSWorkspace.shared.open(url)
         NSApp.hide(nil)
     }
@@ -242,27 +251,40 @@ struct CommandRow: View {
 }
 
 struct ResultRow: View {
-    let result: AppResult
+    let result: SearchResult
     let isSelected: Bool
     let isHovered: Bool
     
     var body: some View {
         HStack(spacing: 12) {
-            if let nsImage = IconManager.shared.icon(for: result.App.IconPath, fallbackAppPath: result.App.Path) {
-                Image(nsImage: nsImage)
-                    .resizable()
-                    .frame(width: Theme.iconSize, height: Theme.iconSize)
+            if result.Item.itemType == .app {
+                if let nsImage = IconManager.shared.icon(for: result.Item.IconPath, fallbackAppPath: result.Item.Path) {
+                    Image(nsImage: nsImage)
+                        .resizable()
+                        .frame(width: Theme.iconSize, height: Theme.iconSize)
+                } else {
+                    Image(systemName: "app.fill")
+                        .resizable()
+                        .frame(width: Theme.iconSize, height: Theme.iconSize)
+                        .foregroundColor(Theme.textSecondary)
+                }
             } else {
-                Image(systemName: "app.fill")
+                Image(systemName: "folder.fill")
                     .resizable()
+                    .aspectRatio(contentMode: .fit)
                     .frame(width: Theme.iconSize, height: Theme.iconSize)
-                    .foregroundColor(Theme.textSecondary)
+                    .foregroundColor(.blue)
             }
             
             VStack(alignment: .leading, spacing: 1) {
-                Text(result.App.Name)
+                Text(result.Item.Name)
                     .font(.system(size: 14, weight: isSelected ? .semibold : .regular))
                     .foregroundColor(isSelected ? Theme.textSelected : Theme.textPrimary)
+                
+                Text(result.Item.Path)
+                    .font(.system(size: 10))
+                    .foregroundColor(isSelected ? Theme.textSelected.opacity(0.7) : Theme.textSecondary)
+                    .lineLimit(1)
             }
             Spacer()
         }
