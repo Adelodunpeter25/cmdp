@@ -38,10 +38,21 @@ func InitEngine() {
 			"/Applications",
 			"/System/Applications",
 			filepath.Join(homeDir, "Applications"),
-			filepath.Join(homeDir, "Documents"),
-			filepath.Join(homeDir, "Downloads"),
-			filepath.Join(homeDir, "Desktop"),
-			filepath.Join(homeDir, "Developer"), // Often used by devs
+		}
+
+		// Dynamically add all non-hidden directories in homeDir
+		entries, err := os.ReadDir(homeDir)
+		if err == nil {
+			for _, entry := range entries {
+				if entry.IsDir() && !strings.HasPrefix(entry.Name(), ".") {
+					// Skip directories already added or typically redundant
+					name := entry.Name()
+					if name == "Library" || name == "Applications" {
+						continue
+					}
+					dirs = append(dirs, filepath.Join(homeDir, name))
+				}
+			}
 		}
 
 		manager = indexer.NewManager(db, dirs)

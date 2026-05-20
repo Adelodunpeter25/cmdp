@@ -35,11 +35,7 @@ func (c *Crawler) Scan(dirs []string) ([]IndexItem, error) {
 }
 
 func (c *Crawler) walk(path string, depth int, items *[]IndexItem) error {
-	if depth > c.maxDepth {
-		return nil
-	}
-
-	if utils.ShouldIgnore(path) {
+	if depth >= c.maxDepth {
 		return nil
 	}
 
@@ -128,8 +124,10 @@ func (c *Crawler) walk(path string, depth int, items *[]IndexItem) error {
 		})
 
 		// Recursively scan subdirectories
-		if err := c.walk(fullPath, depth+1, items); err != nil {
-			continue
+		if depth+1 <= c.maxDepth {
+			if err := c.walk(fullPath, depth+1, items); err != nil {
+				continue
+			}
 		}
 	}
 
