@@ -42,6 +42,8 @@ cat <<PLIST > "${APP_NAME}.app/Contents/Info.plist"
     <string>${BUNDLE_ID}</string>
     <key>CFBundleName</key>
     <string>${APP_NAME}</string>
+    <key>CFBundleIconFile</key>
+    <string>AppIcon</string>
     <key>CFBundlePackageType</key>
     <string>APPL</string>
     <key>CFBundleShortVersionString</key>
@@ -58,7 +60,16 @@ cat <<PLIST > "${APP_NAME}.app/Contents/Info.plist"
 </plist>
 PLIST
 
-# 6. Ad-hoc sign the bundle
+# 6. Copy app icon
+ICNS_SRC="$PROJECT_ROOT/cmdp/Resources/AppIcon.icns"
+if [[ -f "$ICNS_SRC" ]]; then
+    cp "$ICNS_SRC" "${APP_NAME}.app/Contents/Resources/AppIcon.icns"
+    echo "🎨 App icon copied."
+else
+    echo "⚠️  AppIcon.icns not found at $ICNS_SRC — run scripts/make_icns.sh first."
+fi
+
+# 7. Ad-hoc sign the bundle
 echo "✍️  Ad-hoc signing the bundle..."
 codesign --force --deep --sign - "${APP_NAME}.app"
 
