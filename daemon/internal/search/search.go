@@ -88,8 +88,9 @@ func scoreItem(query string, item indexer.IndexItem, fuzzyScore int) int {
 
 // Items matches a query against a slice of IndexItems and returns ranked results.
 func Items(query string, items []indexer.IndexItem) []Result {
+	// Always return a non-nil slice so json.Marshal produces "[]" not "null".
 	if len(items) == 0 {
-		return nil
+		return []Result{}
 	}
 
 	// Empty query: return everything sorted alphabetically.
@@ -133,7 +134,8 @@ func Items(query string, items []indexer.IndexItem) []Result {
 
 	// Apply per-group caps: return at most maxAppResults apps and
 	// maxFolderResults folders (both already in score-descending order).
-	var capped []Result
+	// Use make() — a nil slice marshals to JSON null; an empty slice marshals to [].
+	capped := make([]Result, 0, maxAppResults+maxFolderResults)
 	appCount, folderCount := 0, 0
 	for _, r := range results {
 		switch r.Item.Type {

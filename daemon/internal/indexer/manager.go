@@ -67,18 +67,17 @@ func (m *Manager) GetItems() []IndexItem {
 	return m.items
 }
 
-// Reset clears all items and the database
+// Reset clears all items and the database, then triggers a fresh scan.
 func (m *Manager) Reset() {
 	m.mu.Lock()
 	m.items = nil
 	m.mu.Unlock()
 
-	_, err := m.db.conn.Exec("DELETE FROM items")
-	if err != nil {
+	if err := m.db.DeleteAll(); err != nil {
 		log.Printf("Manager: Failed to clear database: %v", err)
 	}
 	log.Println("Manager: Index reset successfully")
-	
+
 	// Trigger a fresh scan
 	go m.refresh()
 }

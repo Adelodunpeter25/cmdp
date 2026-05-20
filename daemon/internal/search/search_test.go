@@ -109,9 +109,11 @@ func TestEmptyQuery(t *testing.T) {
 }
 
 func TestEmptyItems(t *testing.T) {
+	// Items() now always returns a non-nil slice so json.Marshal produces "[]"
+	// not "null".  An empty index should return an empty (not nil) slice.
 	results := Items("Figma", nil)
-	if results != nil {
-		t.Errorf("empty items: expected nil, got %v", results)
+	if results == nil || len(results) != 0 {
+		t.Errorf("empty items: expected empty slice, got %v", results)
 	}
 }
 

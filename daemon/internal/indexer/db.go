@@ -33,19 +33,24 @@ func OpenDB(path string) (*DB, error) {
 	return &DB{conn: db}, nil
 }
 
+// SaveItems replaces the entire items table with the provided list in a single
+// atomic transaction.  This guarantees no stale entries (uninstalled apps,
+// wrongly-typed rows, removed folders) survive between scans.
 func (db *DB) SaveItems(items []IndexItem) error {
 	tx, err := db.conn.Begin()
 	if err != nil {
 		return err
 	}
 
+	// Wipe existing data first.
+	if _, err := tx.Exec("DELETE FROM items"); err != nil {
+		tx.Rollback()
+		return err
+	}
+
 	stmt, err := tx.Prepare(`
 		INSERT INTO items(path, name, icon_path, type)
 		VALUES(?, ?, ?, ?)
-		ON CONFLICT(path) DO UPDATE SET
-			name = excluded.name,
-			icon_path = excluded.icon_path,
-			type = excluded.type
 	`)
 	if err != nil {
 		tx.Rollback()
@@ -63,6 +68,13 @@ func (db *DB) SaveItems(items []IndexItem) error {
 
 	return tx.Commit()
 }
+
+// DeleteAll removes all items from the database.
+func (db *DB) DeleteAll() error {
+	_, err := db.conn.Exec("DELETE FROM items")
+	return err
+}
+
 
 func (db *DB) LoadItems() ([]IndexItem, error) {
 	rows, err := db.conn.Query("SELECT name, path, icon_path, type FROM items")
