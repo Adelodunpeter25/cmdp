@@ -24,7 +24,7 @@ func (c *Crawler) Scan(dirs []string) ([]IndexItem, error) {
 	var items []IndexItem
 
 	for _, dir := range dirs {
-		err := c.walk(dir, 0, &items)
+		err := c.walk(dir, dir, 0, &items)
 		if err != nil {
 			// Log error but continue with other directories
 			continue
@@ -34,8 +34,12 @@ func (c *Crawler) Scan(dirs []string) ([]IndexItem, error) {
 	return items, nil
 }
 
-func (c *Crawler) walk(path string, depth int, items *[]IndexItem) error {
+func (c *Crawler) walk(root string, path string, depth int, items *[]IndexItem) error {
 	if depth >= c.maxDepth {
+		return nil
+	}
+
+	if utils.ShouldIgnore(path, root) {
 		return nil
 	}
 
@@ -47,7 +51,7 @@ func (c *Crawler) walk(path string, depth int, items *[]IndexItem) error {
 	for _, entry := range entries {
 		fullPath := filepath.Join(path, entry.Name())
 
-		if utils.ShouldIgnore(fullPath) {
+		if utils.ShouldIgnore(fullPath, root) {
 			continue
 		}
 
@@ -84,16 +88,15 @@ func (c *Crawler) walk(path string, depth int, items *[]IndexItem) error {
 		}
 
 		if !info.IsDir() {
-			// For now, we only index apps and folders. 
-			// Files will be added later as requested.
 			continue
 		}
 
 		// Check if it's an .app bundle
-		if strings.HasSuffix(fullPath, ".app") {
+		// We only consider it an app if it's a directory ending in .app
+		if strings.HasSuffix(entry.Name(), ".app") {
 			name, iconFile := utils.ParseAppInfo(fullPath)
 			if name == "" || name == ".app" {
-				name = strings.TrimSuffix(filepath.Base(fullPath), ".app")
+				name = strings.TrimSuffix(entry.Name(), ".app")
 			}
 
 			iconPath := ""
@@ -124,8 +127,8 @@ func (c *Crawler) walk(path string, depth int, items *[]IndexItem) error {
 		})
 
 		// Recursively scan subdirectories
-		if depth+1 <= c.maxDepth {
-			if err := c.walk(fullPath, depth+1, items); err != nil {
+		if depth+1 < c.maxDepth {
+			if err := c.walk(root, fullPath, depth+1, items); err != nil {
 				continue
 			}
 		}

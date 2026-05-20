@@ -25,13 +25,6 @@ var ignoredDirectories = map[string]bool{
 	"Library":          true,
 	"Frameworks":       true,
 	".Trash":           true,
-	"Applications":     true, // Handled separately or skipped to avoid redundancy
-	"System":           true,
-	"Volumes":          true,
-	"Network":          true,
-	"private":          true,
-	"dev":              true,
-	"cores":            true,
 }
 
 var ignoredFiles = map[string]bool{
@@ -51,8 +44,14 @@ var ignoredExtensions = map[string]bool{
 	".lock": true,
 }
 
-// ShouldIgnore returns true if the given path, directory name, or file name should be ignored.
-func ShouldIgnore(path string) bool {
+// ShouldIgnore returns true if the given path should be ignored.
+// It will NOT ignore the path if it matches the root directory being scanned.
+func ShouldIgnore(path string, root string) bool {
+	// Never ignore the root itself
+	if path == root {
+		return false
+	}
+
 	name := filepath.Base(path)
 
 	// Check exact directory/file matches
@@ -60,8 +59,7 @@ func ShouldIgnore(path string) bool {
 		return true
 	}
 
-	// Check hidden files/folders (starting with dot), but allow some common ones if needed
-	// For now, let's ignore all hidden items by default to keep the index clean.
+	// Check hidden files/folders (starting with dot)
 	if strings.HasPrefix(name, ".") && name != "." && name != ".." {
 		return true
 	}
