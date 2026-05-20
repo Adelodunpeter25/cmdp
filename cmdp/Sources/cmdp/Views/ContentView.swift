@@ -12,7 +12,7 @@ struct ContentView: View {
         VStack(spacing: 0) {
             // Search Bar
             HStack {
-                Image(systemName: searchService.isCommandMode ? "chevron.right" : "magnifyingglass")
+                Image(systemName: searchService.isCommandMode ? "command" : "magnifyingglass")
                     .font(.system(size: 22, weight: .light))
                     .foregroundColor(Theme.searchIconColor)
                     .padding(.leading, 4)
