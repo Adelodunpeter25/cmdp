@@ -2,8 +2,6 @@ package indexer
 
 import (
 	"database/sql"
-	"errors"
-	"time"
 
 	_ "github.com/mattn/go-sqlite3"
 )
@@ -24,9 +22,7 @@ func OpenDB(path string) (*DB, error) {
 		path TEXT PRIMARY KEY,
 		name TEXT,
 		icon_path TEXT,
-		type TEXT,
-		last_opened DATETIME,
-		frequency INTEGER DEFAULT 0
+		type TEXT
 	);`
 
 	_, err = db.Exec(query)
@@ -35,9 +31,9 @@ func OpenDB(path string) (*DB, error) {
 	}
 
 	return &DB{conn: db}, nil
-	}
+}
 
-	func (db *DB) SaveItems(items []IndexItem) error {
+func (db *DB) SaveItems(items []IndexItem) error {
 	tx, err := db.conn.Begin()
 	if err != nil {
 		return err
@@ -66,10 +62,10 @@ func OpenDB(path string) (*DB, error) {
 	}
 
 	return tx.Commit()
-	}
+}
 
-	func (db *DB) LoadItems() ([]IndexItem, error) {
-	rows, err := db.conn.Query("SELECT name, path, icon_path, type, last_opened, frequency FROM items")
+func (db *DB) LoadItems() ([]IndexItem, error) {
+	rows, err := db.conn.Query("SELECT name, path, icon_path, type FROM items")
 	if err != nil {
 		return nil, err
 	}
@@ -79,35 +75,11 @@ func OpenDB(path string) (*DB, error) {
 	for rows.Next() {
 		var item IndexItem
 		var itemType string
-		var lastOpened sql.NullString
-		if err := rows.Scan(&item.Name, &item.Path, &item.IconPath, &itemType, &lastOpened, &item.Frequency); err != nil {
+		if err := rows.Scan(&item.Name, &item.Path, &item.IconPath, &itemType); err != nil {
 			return nil, err
 		}
 		item.Type = ItemType(itemType)
-		if lastOpened.Valid {
-			parsed, err := parseSQLiteTime(lastOpened.String)
-			if err == nil {
-				item.LastOpened = parsed
-			}
-		}
 		items = append(items, item)
 	}
 	return items, nil
-	}
-
-func parseSQLiteTime(value string) (time.Time, error) {
-	layouts := []string{
-		time.RFC3339Nano,
-		time.RFC3339,
-		"2006-01-02 15:04:05",
-		"2006-01-02 15:04:05-07:00",
-	}
-
-	for _, layout := range layouts {
-		if parsed, err := time.Parse(layout, value); err == nil {
-			return parsed, nil
-		}
-	}
-
-	return time.Time{}, errors.New("unable to parse sqlite time")
 }

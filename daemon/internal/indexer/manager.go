@@ -58,13 +58,6 @@ func (m *Manager) refresh() {
 		log.Printf("Manager: Failed to save items to DB: %v", err)
 	}
 
-	// Reload from DB to preserve frecency data in memory
-	if itemsWithFrecency, err := m.db.LoadItems(); err == nil {
-		m.mu.Lock()
-		m.items = itemsWithFrecency
-		m.mu.Unlock()
-	}
-
 	log.Printf("Manager: Index refreshed in %v. Found %d items.", time.Since(start), len(allItems))
 }
 
@@ -88,25 +81,4 @@ func (m *Manager) Reset() {
 	
 	// Trigger a fresh scan
 	go m.refresh()
-}
-
-// UpdateFrecency should be called when an item is selected
-func (m *Manager) UpdateFrecency(path string) error {
-	now := time.Now()
-
-	m.mu.Lock()
-	for i := range m.items {
-		if m.items[i].Path == path {
-			m.items[i].Frequency++
-			m.items[i].LastOpened = now
-			break
-		}
-	}
-	m.mu.Unlock()
-
-	_, err := m.db.conn.Exec(`
-		UPDATE items 
-		SET last_opened = ?, frequency = frequency + 1 
-		WHERE path = ?`, now, path)
-	return err
 }

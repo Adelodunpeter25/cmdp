@@ -1,9 +1,5 @@
 package indexer
 
-import (
-	"time"
-)
-
 type ItemType string
 
 const (
@@ -12,10 +8,8 @@ const (
 )
 
 type IndexItem struct {
-	Name       string    `json:"Name"`
-	Path       string    `json:"Path"`
-	IconPath   string    `json:"IconPath"`
-	Type       ItemType  `json:"Type"`
-	LastOpened time.Time `json:"LastOpened"`
-	Frequency  int       `json:"Frequency"`
+	Name     string   `json:"Name"`
+	Path     string   `json:"Path"`
+	IconPath string   `json:"IconPath"`
+	Type     ItemType `json:"Type"`
 }

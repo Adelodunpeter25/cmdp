@@ -11,9 +11,12 @@ This document outlines the core architectural decisions for the "cmd + p" launch
 - **Memory-First:** The file list is stored in RAM for sub-10ms search response times.
 - **Background Updates:** Uses filesystem watchers (via `fsnotify` in Go) to keep the index fresh without full rescans.
 
-## 3. "Smart" Ranking: Frecency
-- Results are ranked based on a combination of **Frequency** (how often an item is selected) and **Recency** (how recently it was selected).
-- The Go engine will maintain a small persistent database (e.g., SQLite or a KV store) to track usage metrics.
+## 3. Search Ranking: Strict Fuzzy + Prefix Match
+- Results are ranked strictly based on:
+    1. **Exact Name Match:** Items matching the query exactly are prioritized.
+    2. **Prefix Match:** Items starting with the query are ranked higher.
+    3. **Fuzzy Score:** The base relevance score provided by the fuzzy matching algorithm.
+- Frecency (Frequency/Recency) was removed to ensure a deterministic and predictable search experience.
 
 ## 4. Communication: C-Archive (cgo)
 - The Go engine will be compiled into a static C-library (`.a` file).

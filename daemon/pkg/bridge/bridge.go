@@ -75,7 +75,6 @@ func InitEngine() {
 			return
 		}
 
-		// go manager.Watch() // Temporarily disable watch during refactor if needed, or update it
 		log.Println("Bridge: Go Engine initialized successfully")
 	})
 }
@@ -99,16 +98,6 @@ func SearchApps(query *C.char) *C.char {
 	}
 
 	return C.CString(string(jsonData))
-}
-
-// Mark an app as selected to update its frecency score.
-//export MarkSelected
-func MarkSelected(path *C.char) {
-	if manager == nil {
-		return
-	}
-	goPath := C.GoString(path)
-	manager.UpdateFrecency(goPath)
 }
 
 // Reset the index by clearing the database.

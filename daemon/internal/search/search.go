@@ -3,7 +3,6 @@ package search
 import (
 	"sort"
 	"strings"
-	"time"
 
 	"github.com/sahilm/fuzzy"
 	"github.com/Adelodunpeter25/cmdp/daemon/internal/indexer"
@@ -27,7 +26,7 @@ func Items(query string, items []indexer.IndexItem) []Result {
 			results[i] = Result{Item: item, Score: 0}
 		}
 		sort.SliceStable(results, func(i, j int) bool {
-			return frecencyRank(results[i].Item) > frecencyRank(results[j].Item)
+			return results[i].Item.Name < results[j].Item.Name
 		})
 		return results
 	}
@@ -48,8 +47,8 @@ func Items(query string, items []indexer.IndexItem) []Result {
 	}
 
 	sort.SliceStable(results, func(i, j int) bool {
-		scoreI := float64(results[i].Score) * 10
-		scoreJ := float64(results[j].Score) * 10
+		scoreI := float64(results[i].Score)
+		scoreJ := float64(results[j].Score)
 
 		lowerQuery := strings.ToLower(query)
 		nameI := strings.ToLower(results[i].Item.Name)
@@ -57,32 +56,19 @@ func Items(query string, items []indexer.IndexItem) []Result {
 
 		// 1. Exact Name Match (Highest priority)
 		if nameI == lowerQuery {
-			scoreI += 100000
+			scoreI += 1000
 		}
 		if nameJ == lowerQuery {
-			scoreJ += 100000
+			scoreJ += 1000
 		}
 
 		// 2. Prefix Match Bonus
 		if strings.HasPrefix(nameI, lowerQuery) {
-			scoreI += 20000
+			scoreI += 500
 		}
 		if strings.HasPrefix(nameJ, lowerQuery) {
-			scoreJ += 20000
+			scoreJ += 500
 		}
-
-		// 3. Application Type Boost
-		// Applications get a massive boost to keep them above folders.
-		if results[i].Item.Type == indexer.TypeApp {
-			scoreI += 50000
-		}
-		if results[j].Item.Type == indexer.TypeApp {
-			scoreJ += 50000
-		}
-
-		// 4. Frecency (Subtle tie-breaker)
-		scoreI += frecencyRank(results[i].Item)
-		scoreJ += frecencyRank(results[j].Item)
 
 		if scoreI == scoreJ {
 			return results[i].Item.Name < results[j].Item.Name
@@ -91,29 +77,4 @@ func Items(query string, items []indexer.IndexItem) []Result {
 	})
 
 	return results
-}
-
-func frecencyRank(item indexer.IndexItem) float64 {
-	// Frequency: Each click adds 100 points (max 1000)
-	freqScore := float64(item.Frequency) * 100
-	if freqScore > 1000 {
-		freqScore = 1000
-	}
-
-	if item.LastOpened.IsZero() {
-		return freqScore
-	}
-
-	// Recency: Items opened in the last hour get a boost
-	age := time.Since(item.LastOpened)
-	recencyScore := 0.0
-	if age < time.Hour {
-		recencyScore = 500
-	} else if age < 24*time.Hour {
-		recencyScore = 200
-	} else if age < 7*24*time.Hour {
-		recencyScore = 50
-	}
-
-	return freqScore + recencyScore
 }

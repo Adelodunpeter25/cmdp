@@ -2,32 +2,31 @@ package search
 
 import (
 	"testing"
-	"time"
 
 	"github.com/Adelodunpeter25/cmdp/daemon/internal/indexer"
 )
 
-func TestSearchApps(t *testing.T) {
-	apps := []indexer.App{
-		{Name: "Google Chrome", Path: "/Applications/Google Chrome.app", Frequency: 2, LastOpened: time.Now().Add(-24 * time.Hour)},
-		{Name: "Brave Browser", Path: "/Applications/Brave Browser.app", Frequency: 10, LastOpened: time.Now().Add(-48 * time.Hour)},
-		{Name: "Figma", Path: "/Applications/Figma.app", Frequency: 1, LastOpened: time.Now().Add(-2 * time.Hour)},
-		{Name: "Calculator", Path: "/System/Applications/Calculator.app"},
+func TestSearchItems(t *testing.T) {
+	items := []indexer.IndexItem{
+		{Name: "Google Chrome", Path: "/Applications/Google Chrome.app", Type: indexer.TypeApp},
+		{Name: "Brave Browser", Path: "/Applications/Brave Browser.app", Type: indexer.TypeApp},
+		{Name: "Figma", Path: "/Applications/Figma.app", Type: indexer.TypeApp},
+		{Name: "Calculator", Path: "/System/Applications/Calculator.app", Type: indexer.TypeApp},
 	}
 
 	t.Run("Exact match", func(t *testing.T) {
-		results := Apps("Figma", apps)
-		if len(results) == 0 || results[0].App.Name != "Figma" {
+		results := Items("Figma", items)
+		if len(results) == 0 || results[0].Item.Name != "Figma" {
 			t.Errorf("Expected Figma as first result, got %+v", results)
 		}
 	})
 
 	t.Run("Fuzzy match", func(t *testing.T) {
 		// "Chr" should match "Google Chrome"
-		results := Apps("Chr", apps)
+		results := Items("Chr", items)
 		found := false
 		for _, r := range results {
-			if r.App.Name == "Google Chrome" {
+			if r.Item.Name == "Google Chrome" {
 				found = true
 				break
 			}
@@ -38,12 +37,13 @@ func TestSearchApps(t *testing.T) {
 	})
 
 	t.Run("Empty query", func(t *testing.T) {
-		results := Apps("", apps)
-		if len(results) != len(apps) {
-			t.Errorf("Expected all apps for empty query, got %d", len(results))
+		results := Items("", items)
+		if len(results) != len(items) {
+			t.Errorf("Expected all items for empty query, got %d", len(results))
 		}
-		if len(results) > 0 && results[0].App.Name != "Brave Browser" {
-			t.Errorf("Expected most frequented app first, got %s", results[0].App.Name)
+		// Alphabetical order for empty query
+		if len(results) > 0 && results[0].Item.Name != "Brave Browser" {
+			t.Errorf("Expected alphabetical first item, got %s", results[0].Item.Name)
 		}
 	})
 }
