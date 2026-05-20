@@ -36,6 +36,12 @@ struct Command: Identifiable, Equatable {
             name: "Empty Trash",
             iconName: "trash",
             script: "tell application \"Finder\"\nif (count of items in trash) > 0 then\nempty trash\nend if\nend tell"
+        ),
+        Command(
+            id: "reset-index",
+            name: "Reset Index",
+            iconName: "arrow.counterclockwise.circle",
+            script: "RESET_INDEX"
         )
     ]
 }

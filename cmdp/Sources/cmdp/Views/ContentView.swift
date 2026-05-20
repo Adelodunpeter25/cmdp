@@ -141,24 +141,25 @@ struct ContentView: View {
         var appItems: [SearchResult] = []
         var folderItems: [SearchResult] = []
         
-        // Find which type has the overall top result
-        let topType = results.first?.Item.itemType
-        
         for result in results {
             if result.Item.itemType == .app {
                 appItems.append(result)
-            } else {
+            } else if result.Item.itemType == .folder {
                 folderItems.append(result)
             }
         }
         
         var groups: [ResultGroup] = []
-        if topType == .app {
-            if !appItems.isEmpty { groups.append(ResultGroup(type: .app, items: appItems)) }
-            if !folderItems.isEmpty { groups.append(ResultGroup(type: .folder, items: folderItems)) }
-        } else {
-            if !folderItems.isEmpty { groups.append(ResultGroup(type: .folder, items: folderItems)) }
-            if !appItems.isEmpty { groups.append(ResultGroup(type: .app, items: appItems)) }
+        
+        // Backend order determines which group comes first
+        if let firstResult = results.first {
+            if firstResult.Item.itemType == .app {
+                if !appItems.isEmpty { groups.append(ResultGroup(type: .app, items: appItems)) }
+                if !folderItems.isEmpty { groups.append(ResultGroup(type: .folder, items: folderItems)) }
+            } else {
+                if !folderItems.isEmpty { groups.append(ResultGroup(type: .folder, items: folderItems)) }
+                if !appItems.isEmpty { groups.append(ResultGroup(type: .app, items: appItems)) }
+            }
         }
         
         return groups
@@ -258,7 +259,11 @@ struct ContentView: View {
     }
 
     func executeCommand(_ command: Command) {
-        CommandService.shared.execute(command)
+        if command.script == "RESET_INDEX" {
+            searchService.resetIndex()
+        } else {
+            CommandService.shared.execute(command)
+        }
         NSApp.hide(nil)
     }
 }

@@ -73,6 +73,10 @@ class SearchService: ObservableObject {
         }
     }
 
+    func resetIndex() {
+        ResetIndex()
+    }
+
     private func performSearch(query: String) -> [SearchResult] {
         var decodedResults: [SearchResult] = []
 
