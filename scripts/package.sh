@@ -16,6 +16,11 @@ cd "$PROJECT_ROOT/daemon"
 # Assuming we want a release build of the Go lib too (optimizations)
 go build -buildmode=c-archive -o build/libsearch.a ./pkg/bridge
 
+# Copy Go binary to Swift CLibSearch directory
+mkdir -p "$PROJECT_ROOT/cmdp/Sources/CLibSearch"
+cp build/libsearch.a "$PROJECT_ROOT/cmdp/Sources/CLibSearch/libsearch.a"
+echo "Copied Go search library to Swift package."
+
 # 2. Build Swift App (Release)
 echo "Building Swift App (cmdp)..."
 cd "$PROJECT_ROOT/cmdp"
