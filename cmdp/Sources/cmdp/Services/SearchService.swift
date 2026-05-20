@@ -67,12 +67,6 @@ class SearchService: ObservableObject {
         }
     }
     
-    func select(item: IndexItem) {
-        item.Path.withCString { cPath in
-            MarkSelected(UnsafeMutablePointer(mutating: cPath))
-        }
-    }
-
     func resetIndex() {
         ResetIndex()
     }
@@ -102,4 +96,4 @@ class SearchService: ObservableObject {
 
         return decodedResults
     }
-}
+    }

@@ -90,9 +90,6 @@ extern void InitEngine(void);
 // Swift is responsible for freeing the returned C string.
 extern char* SearchApps(char* query);
 
-// Mark an app as selected to update its frecency score.
-extern void MarkSelected(char* path);
-
 // Reset the index by clearing the database.
 extern void ResetIndex(void);
 

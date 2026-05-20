@@ -260,7 +260,6 @@ struct ContentView: View {
     }
 
     func executeSelection(_ result: SearchResult) {
-        searchService.select(item: result.Item)
         let url = URL(fileURLWithPath: result.Item.Path)
         NSWorkspace.shared.open(url)
         NSApp.hide(nil)
