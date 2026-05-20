@@ -10,33 +10,30 @@ import (
 
 // Result represents a single search result with its match score
 type Result struct {
-	App   indexer.App
+	Item  indexer.IndexItem
 	Score int
 }
 
-// Apps matches a query against a slice of Apps using fuzzy matching
-func Apps(query string, apps []indexer.App) []Result {
-	if len(apps) == 0 {
+// Items matches a query against a slice of IndexItems using fuzzy matching
+func Items(query string, items []indexer.IndexItem) []Result {
+	if len(items) == 0 {
 		return nil
 	}
 
 	if query == "" {
-		results := make([]Result, len(apps))
-		for i, app := range apps {
-			results[i] = Result{App: app, Score: 0}
+		results := make([]Result, len(items))
+		for i, item := range items {
+			results[i] = Result{Item: item, Score: 0}
 		}
 		sort.SliceStable(results, func(i, j int) bool {
-			return frecencyRank(results[i].App) > frecencyRank(results[j].App)
+			return frecencyRank(results[i].Item) > frecencyRank(results[j].Item)
 		})
 		return results
 	}
 
-	// sahilm/fuzzy needs a source that implements their interface
-	// or we can just pass a slice of strings for simple cases.
-	// Let's create a slice of names for the fuzzy matcher.
-	names := make([]string, len(apps))
-	for i, app := range apps {
-		names[i] = app.Name
+	names := make([]string, len(items))
+	for i, item := range items {
+		names[i] = item.Name
 	}
 
 	matches := fuzzy.Find(query, names)
@@ -44,16 +41,27 @@ func Apps(query string, apps []indexer.App) []Result {
 	results := make([]Result, len(matches))
 	for i, match := range matches {
 		results[i] = Result{
-			App:   apps[match.Index],
+			Item:  items[match.Index],
 			Score: match.Score,
 		}
 	}
 
 	sort.SliceStable(results, func(i, j int) bool {
-		left := float64(results[i].Score)*1_000_000 + frecencyRank(results[i].App)
-		right := float64(results[j].Score)*1_000_000 + frecencyRank(results[j].App)
+		// Base boost for apps over folders
+		leftBoost := 0.0
+		if results[i].Item.Type == indexer.TypeApp {
+			leftBoost = 500_000
+		}
+		rightBoost := 0.0
+		if results[j].Item.Type == indexer.TypeApp {
+			rightBoost = 500_000
+		}
+
+		left := float64(results[i].Score)*1_000_000 + frecencyRank(results[i].Item) + leftBoost
+		right := float64(results[j].Score)*1_000_000 + frecencyRank(results[j].Item) + rightBoost
+
 		if left == right {
-			return results[i].App.Name < results[j].App.Name
+			return results[i].Item.Name < results[j].Item.Name
 		}
 		return left > right
 	})
@@ -61,13 +69,13 @@ func Apps(query string, apps []indexer.App) []Result {
 	return results
 }
 
-func frecencyRank(app indexer.App) float64 {
-	score := float64(app.Frequency) * 1_000_000
-	if app.LastOpened.IsZero() {
+func frecencyRank(item indexer.IndexItem) float64 {
+	score := float64(item.Frequency) * 1_000_000
+	if item.LastOpened.IsZero() {
 		return score
 	}
 
-	ageMinutes := time.Since(app.LastOpened).Minutes()
+	ageMinutes := time.Since(item.LastOpened).Minutes()
 	if ageMinutes < 0 {
 		ageMinutes = 0
 	}

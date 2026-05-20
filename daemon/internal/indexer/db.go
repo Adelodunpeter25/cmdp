@@ -20,10 +20,11 @@ func OpenDB(path string) (*DB, error) {
 
 	// Create tables if they don't exist
 	query := `
-	CREATE TABLE IF NOT EXISTS apps (
+	CREATE TABLE IF NOT EXISTS items (
 		path TEXT PRIMARY KEY,
 		name TEXT,
 		icon_path TEXT,
+		type TEXT,
 		last_opened DATETIME,
 		frequency INTEGER DEFAULT 0
 	);`
@@ -34,20 +35,21 @@ func OpenDB(path string) (*DB, error) {
 	}
 
 	return &DB{conn: db}, nil
-}
+	}
 
-func (db *DB) SaveApps(apps []App) error {
+	func (db *DB) SaveItems(items []IndexItem) error {
 	tx, err := db.conn.Begin()
 	if err != nil {
 		return err
 	}
 
 	stmt, err := tx.Prepare(`
-		INSERT INTO apps(path, name, icon_path)
-		VALUES(?, ?, ?)
+		INSERT INTO items(path, name, icon_path, type)
+		VALUES(?, ?, ?, ?)
 		ON CONFLICT(path) DO UPDATE SET
 			name = excluded.name,
-			icon_path = excluded.icon_path
+			icon_path = excluded.icon_path,
+			type = excluded.type
 	`)
 	if err != nil {
 		tx.Rollback()
@@ -55,8 +57,8 @@ func (db *DB) SaveApps(apps []App) error {
 	}
 	defer stmt.Close()
 
-	for _, app := range apps {
-		_, err = stmt.Exec(app.Path, app.Name, app.IconPath)
+	for _, item := range items {
+		_, err = stmt.Exec(item.Path, item.Name, item.IconPath, string(item.Type))
 		if err != nil {
 			tx.Rollback()
 			return err
@@ -64,32 +66,34 @@ func (db *DB) SaveApps(apps []App) error {
 	}
 
 	return tx.Commit()
-}
+	}
 
-func (db *DB) LoadApps() ([]App, error) {
-	rows, err := db.conn.Query("SELECT name, path, icon_path, last_opened, frequency FROM apps")
+	func (db *DB) LoadItems() ([]IndexItem, error) {
+	rows, err := db.conn.Query("SELECT name, path, icon_path, type, last_opened, frequency FROM items")
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
 
-	var apps []App
+	var items []IndexItem
 	for rows.Next() {
-		var app App
+		var item IndexItem
+		var itemType string
 		var lastOpened sql.NullString
-		if err := rows.Scan(&app.Name, &app.Path, &app.IconPath, &lastOpened, &app.Frequency); err != nil {
+		if err := rows.Scan(&item.Name, &item.Path, &item.IconPath, &itemType, &lastOpened, &item.Frequency); err != nil {
 			return nil, err
 		}
+		item.Type = ItemType(itemType)
 		if lastOpened.Valid {
 			parsed, err := parseSQLiteTime(lastOpened.String)
 			if err == nil {
-				app.LastOpened = parsed
+				item.LastOpened = parsed
 			}
 		}
-		apps = append(apps, app)
+		items = append(items, item)
 	}
-	return apps, nil
-}
+	return items, nil
+	}
 
 func parseSQLiteTime(value string) (time.Time, error) {
 	layouts := []string{

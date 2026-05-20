@@ -1,31 +1,34 @@
 package indexer
 
 import (
+	"log"
 	"sync"
 	"time"
 )
 
 type Manager struct {
-	db     *DB
-	apps   []App
-	mu     sync.RWMutex
-	dirs   []string
+	db      *DB
+	items   []IndexItem
+	mu      sync.RWMutex
+	dirs    []string
+	crawler *Crawler
 }
 
 func NewManager(db *DB, dirs []string) *Manager {
 	return &Manager{
-		db:   db,
-		dirs: dirs,
+		db:      db,
+		dirs:    dirs,
+		crawler: NewCrawler(5), // Set a reasonable max depth
 	}
 }
 
 // Start performs the initial scan and loads data from DB
 func (m *Manager) Start() error {
 	// 1. Try to load from DB first for instant startup
-	apps, err := m.db.LoadApps()
-	if err == nil && len(apps) > 0 {
+	items, err := m.db.LoadItems()
+	if err == nil && len(items) > 0 {
 		m.mu.Lock()
-		m.apps = apps
+		m.items = items
 		m.mu.Unlock()
 	}
 
@@ -36,64 +39,57 @@ func (m *Manager) Start() error {
 }
 
 func (m *Manager) refresh() {
-	// Concurrent scanning of different directories
-	var wg sync.WaitGroup
-	var allApps []App
-	var mu sync.Mutex
+	log.Println("Manager: Refreshing index...")
+	start := time.Now()
 
-	for _, dir := range m.dirs {
-		wg.Add(1)
-		go func(d string) {
-			defer wg.Done()
-			apps, err := Scan([]string{d}) // Using our scan logic
-			if err == nil {
-				mu.Lock()
-				allApps = append(allApps, apps...)
-				mu.Unlock()
-			}
-		}(dir)
+	allItems, err := m.crawler.Scan(m.dirs)
+	if err != nil {
+		log.Printf("Manager: Scan error: %v", err)
+		return
 	}
 
-	wg.Wait()
-
-	// Update memory with scanned apps as fallback
+	// Update memory with scanned items
 	m.mu.Lock()
-	m.apps = allApps
+	m.items = allItems
 	m.mu.Unlock()
 
 	// Update DB
-	m.db.SaveApps(allApps)
+	if err := m.db.SaveItems(allItems); err != nil {
+		log.Printf("Manager: Failed to save items to DB: %v", err)
+	}
 
 	// Reload from DB to preserve frecency data in memory
-	if appsWithFrecency, err := m.db.LoadApps(); err == nil {
+	if itemsWithFrecency, err := m.db.LoadItems(); err == nil {
 		m.mu.Lock()
-		m.apps = appsWithFrecency
+		m.items = itemsWithFrecency
 		m.mu.Unlock()
 	}
+
+	log.Printf("Manager: Index refreshed in %v. Found %d items.", time.Since(start), len(allItems))
 }
 
-func (m *Manager) GetApps() []App {
+func (m *Manager) GetItems() []IndexItem {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
-	return m.apps
+	return m.items
 }
 
-// UpdateFrecency should be called when an app is selected
+// UpdateFrecency should be called when an item is selected
 func (m *Manager) UpdateFrecency(path string) error {
 	now := time.Now()
 
 	m.mu.Lock()
-	for i := range m.apps {
-		if m.apps[i].Path == path {
-			m.apps[i].Frequency++
-			m.apps[i].LastOpened = now
+	for i := range m.items {
+		if m.items[i].Path == path {
+			m.items[i].Frequency++
+			m.items[i].LastOpened = now
 			break
 		}
 	}
 	m.mu.Unlock()
 
 	_, err := m.db.conn.Exec(`
-		UPDATE apps 
+		UPDATE items 
 		SET last_opened = ?, frequency = frequency + 1 
 		WHERE path = ?`, now, path)
 	return err

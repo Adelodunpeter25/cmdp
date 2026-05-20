@@ -38,6 +38,10 @@ func InitEngine() {
 			"/Applications",
 			"/System/Applications",
 			filepath.Join(homeDir, "Applications"),
+			filepath.Join(homeDir, "Documents"),
+			filepath.Join(homeDir, "Downloads"),
+			filepath.Join(homeDir, "Desktop"),
+			filepath.Join(homeDir, "Developer"), // Often used by devs
 		}
 
 		manager = indexer.NewManager(db, dirs)
@@ -46,12 +50,12 @@ func InitEngine() {
 			return
 		}
 
-		go manager.Watch()
+		// go manager.Watch() // Temporarily disable watch during refactor if needed, or update it
 		log.Println("Bridge: Go Engine initialized successfully")
 	})
 }
 
-// Search for apps. Returns a JSON string of results.
+// Search for items. Returns a JSON string of results.
 // Swift is responsible for freeing the returned C string.
 //export SearchApps
 func SearchApps(query *C.char) *C.char {
@@ -60,8 +64,8 @@ func SearchApps(query *C.char) *C.char {
 	}
 
 	goQuery := C.GoString(query)
-	apps := manager.GetApps()
-	results := search.Apps(goQuery, apps)
+	items := manager.GetItems()
+	results := search.Items(goQuery, items)
 
 	// Convert results to JSON for easy parsing in Swift
 	jsonData, err := json.Marshal(results)
