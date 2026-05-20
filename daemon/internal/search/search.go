@@ -10,8 +10,8 @@ import (
 
 // Result represents a single search result with its match score
 type Result struct {
-	Item  indexer.IndexItem
-	Score int
+	Item  indexer.IndexItem `json:"Item"`
+	Score int               `json:"Score"`
 }
 
 // Items matches a query against a slice of IndexItems using fuzzy matching
