@@ -2,6 +2,7 @@ package search
 
 import (
 	"sort"
+	"strings"
 	"time"
 
 	"github.com/sahilm/fuzzy"
@@ -47,43 +48,67 @@ func Items(query string, items []indexer.IndexItem) []Result {
 	}
 
 	sort.SliceStable(results, func(i, j int) bool {
-		// Base boost for apps over folders
-		leftBoost := 0.0
+		// 1. Relevance Score (Fuzzy match)
+		// sahilm/fuzzy scores: higher is better match.
+		// We multiply by a large factor to make it the primary signal.
+		scoreI := float64(results[i].Score) * 1000
+		scoreJ := float64(results[j].Score) * 1000
+
+		// 2. Prefix Match Bonus
+		// If the name starts with the query, give it a significant boost.
+		lowerQuery := strings.ToLower(query)
+		if strings.HasPrefix(strings.ToLower(results[i].Item.Name), lowerQuery) {
+			scoreI += 5000
+		}
+		if strings.HasPrefix(strings.ToLower(results[j].Item.Name), lowerQuery) {
+			scoreJ += 5000
+		}
+
+		// 3. Application Boost
+		// Applications should generally outrank folders if relevance is close.
 		if results[i].Item.Type == indexer.TypeApp {
-			leftBoost = 500_000
+			scoreI += 3000
 		}
-		rightBoost := 0.0
 		if results[j].Item.Type == indexer.TypeApp {
-			rightBoost = 500_000
+			scoreJ += 3000
 		}
 
-		left := float64(results[i].Score)*1_000_000 + frecencyRank(results[i].Item) + leftBoost
-		right := float64(results[j].Score)*1_000_000 + frecencyRank(results[j].Item) + rightBoost
+		// 4. Frecency (Frequency + Recency)
+		// Frecency should be a tie-breaker or subtle adjustment, not the primary driver.
+		// A single click (Frequency 1) should not outrank a prefix match.
+		scoreI += frecencyRank(results[i].Item)
+		scoreJ += frecencyRank(results[j].Item)
 
-		if left == right {
+		if scoreI == scoreJ {
 			return results[i].Item.Name < results[j].Item.Name
 		}
-		return left > right
+		return scoreI > scoreJ
 	})
 
 	return results
 }
 
 func frecencyRank(item indexer.IndexItem) float64 {
-	score := float64(item.Frequency) * 1_000_000
+	// Frequency: Each click adds 100 points (max 1000)
+	freqScore := float64(item.Frequency) * 100
+	if freqScore > 1000 {
+		freqScore = 1000
+	}
+
 	if item.LastOpened.IsZero() {
-		return score
+		return freqScore
 	}
 
-	ageMinutes := time.Since(item.LastOpened).Minutes()
-	if ageMinutes < 0 {
-		ageMinutes = 0
+	// Recency: Items opened in the last hour get a boost
+	age := time.Since(item.LastOpened)
+	recencyScore := 0.0
+	if age < time.Hour {
+		recencyScore = 500
+	} else if age < 24*time.Hour {
+		recencyScore = 200
+	} else if age < 7*24*time.Hour {
+		recencyScore = 50
 	}
 
-	recency := 1_000_000 - ageMinutes
-	if recency < 0 {
-		recency = 0
-	}
-
-	return score + recency
+	return freqScore + recencyScore
 }

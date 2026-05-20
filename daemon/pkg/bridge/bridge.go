@@ -98,6 +98,15 @@ func MarkSelected(path *C.char) {
 	manager.UpdateFrecency(goPath)
 }
 
+// Reset the index by clearing the database.
+//export ResetIndex
+func ResetIndex() {
+	if manager == nil {
+		return
+	}
+	manager.Reset()
+}
+
 func main() {
 	// We need an empty main for c-archive, but it won't be called.
 }

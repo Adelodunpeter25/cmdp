@@ -12,19 +12,15 @@ var ignoredDirectories = map[string]bool{
 	"node_modules":     true,
 	"bower_components": true,
 	"vendor":           true,
+	"pkg":              true, // Go packages
+	"mod":              true, // Go modules
 	"Pods":             true,
 	".vscode":          true,
 	".idea":            true,
 	".DS_Store":        true,
 	".cache":           true,
-	"dist":             true,
-	"build":            true,
-	"target":           true,
-	"bin":              true,
-	"obj":              true,
-	"tmp":              true,
-	"temp":             true,
 	"Library":          true,
+	"Frameworks":       true,
 	".Trash":           true,
 	"Applications":     true, // Handled separately or skipped to avoid redundancy
 	"System":           true,

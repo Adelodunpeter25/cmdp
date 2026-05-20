@@ -74,6 +74,22 @@ func (m *Manager) GetItems() []IndexItem {
 	return m.items
 }
 
+// Reset clears all items and the database
+func (m *Manager) Reset() {
+	m.mu.Lock()
+	m.items = nil
+	m.mu.Unlock()
+
+	_, err := m.db.conn.Exec("DELETE FROM items")
+	if err != nil {
+		log.Printf("Manager: Failed to clear database: %v", err)
+	}
+	log.Println("Manager: Index reset successfully")
+	
+	// Trigger a fresh scan
+	go m.refresh()
+}
+
 // UpdateFrecency should be called when an item is selected
 func (m *Manager) UpdateFrecency(path string) error {
 	now := time.Now()
