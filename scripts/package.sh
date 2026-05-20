@@ -8,13 +8,33 @@ BUNDLE_ID="com.Adelodunpeter25.cmdp"
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 PROJECT_ROOT="$( cd "$SCRIPT_DIR/.." && pwd )"
 
-echo "🚀 Starting production build for $APP_NAME..."
+# Target architecture argument (optional): "x86_64" or "arm64" (aliases: x64, amd64)
+TARGET_ARCH="${1:-}"
+
+if [[ -z "$TARGET_ARCH" ]]; then
+    HOST_ARCH="$(uname -m)"
+    if [[ "$HOST_ARCH" == "arm64" ]]; then
+        TARGET_ARCH="arm64"
+    else
+        TARGET_ARCH="x86_64"
+    fi
+fi
+
+if [[ "$TARGET_ARCH" == "x64" || "$TARGET_ARCH" == "amd64" ]]; then
+    TARGET_ARCH="x86_64"
+fi
+
+echo "🚀 Starting production build for $APP_NAME ($TARGET_ARCH)..."
 
 # 1. Build Go Daemon
 echo "Building Go Daemon..."
 cd "$PROJECT_ROOT/daemon"
-# Assuming we want a release build of the Go lib too (optimizations)
-go build -buildmode=c-archive -o build/libsearch.a ./pkg/bridge
+SDK_PATH="$(xcrun --show-sdk-path)"
+if [[ "$TARGET_ARCH" == "x86_64" ]]; then
+    CGO_ENABLED=1 GOOS=darwin GOARCH=amd64 CC="clang -arch x86_64 -isysroot $SDK_PATH" go build -buildmode=c-archive -o build/libsearch.a ./pkg/bridge
+else
+    CGO_ENABLED=1 GOOS=darwin GOARCH=arm64 CC="clang -arch arm64 -isysroot $SDK_PATH" go build -buildmode=c-archive -o build/libsearch.a ./pkg/bridge
+fi
 
 # Copy Go binary to Swift CLibSearch directory
 mkdir -p "$PROJECT_ROOT/cmdp/Sources/CLibSearch"
@@ -24,7 +44,7 @@ echo "Copied Go search library to Swift package."
 # 2. Build Swift App (Release)
 echo "Building Swift App (cmdp)..."
 cd "$PROJECT_ROOT/cmdp"
-swift build -c release
+swift build -c release --arch "$TARGET_ARCH"
 
 # 3. Assembling the bundle
 echo "📦 Assembling .app bundle..."
@@ -33,7 +53,12 @@ mkdir -p "${APP_NAME}.app/Contents/MacOS"
 mkdir -p "${APP_NAME}.app/Contents/Resources"
 
 # 4. Copy binaries
-cp .build/release/cmdp "${APP_NAME}.app/Contents/MacOS/"
+BINARY_PATH=".build/${TARGET_ARCH}-apple-macosx/release/cmdp"
+if [[ ! -f "$BINARY_PATH" ]]; then
+    # Fallback to default path if arch-specific directory doesn't exist
+    BINARY_PATH=".build/release/cmdp"
+fi
+cp "$BINARY_PATH" "${APP_NAME}.app/Contents/MacOS/"
 
 # 5. Generate Info.plist
 cat <<PLIST > "${APP_NAME}.app/Contents/Info.plist"
