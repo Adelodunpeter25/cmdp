@@ -48,47 +48,46 @@ struct ContentView: View {
             if !searchText.isEmpty && (!searchService.results.isEmpty || !searchService.commandResults.isEmpty) {
                 Divider()
                 
-                HStack {
-                    Text(searchService.isCommandMode ? "COMMANDS" : "TOP HITS")
-                        .font(.system(size: 10, weight: .bold))
-                        .foregroundColor(Theme.textSecondary.opacity(0.8))
-                        .padding(.horizontal, 16)
-                        .padding(.top, 8)
-                    Spacer()
-                }
-
                 ScrollViewReader { proxy in
                     ScrollView {
-                        LazyVStack(spacing: Theme.rowSpacing) {
+                        LazyVStack(spacing: Theme.rowSpacing, pinnedViews: [.sectionHeaders]) {
                             if searchService.isCommandMode {
-                                ForEach(Array(searchService.commandResults.enumerated()), id: \.offset) { index, command in
-                                    CommandRow(command: command, isSelected: selectedIndex == index, isHovered: hoveredIndex == index)
-                                        .onHover { isHovered in
-                                            hoveredIndex = isHovered ? index : nil
-                                        }
-                                        .onTapGesture {
-                                            if selectedIndex == index {
-                                                executeCommand(command)
-                                            } else {
-                                                selectedIndex = index
+                                Section(header: sectionHeader("COMMANDS")) {
+                                    ForEach(Array(searchService.commandResults.enumerated()), id: \.offset) { index, command in
+                                        CommandRow(command: command, isSelected: selectedIndex == index, isHovered: hoveredIndex == index)
+                                            .onHover { isHovered in
+                                                hoveredIndex = isHovered ? index : nil
                                             }
-                                        }
-                                        .id(index)
+                                            .onTapGesture {
+                                                if selectedIndex == index {
+                                                    executeCommand(command)
+                                                } else {
+                                                    selectedIndex = index
+                                                }
+                                            }
+                                            .id(index)
+                                    }
                                 }
                             } else {
-                                ForEach(Array(searchService.results.enumerated()), id: \.offset) { index, result in
-                                    ResultRow(result: result, isSelected: selectedIndex == index, isHovered: hoveredIndex == index)
-                                        .onHover { isHovered in
-                                            hoveredIndex = isHovered ? index : nil
+                                let groups = groupResults(searchService.results)
+                                ForEach(groups, id: \.type) { group in
+                                    Section(header: sectionHeader(group.type == .app ? "APPLICATIONS" : "FOLDERS")) {
+                                        ForEach(group.items) { result in
+                                            let index = searchService.results.firstIndex(of: result) ?? 0
+                                            ResultRow(result: result, isSelected: selectedIndex == index, isHovered: hoveredIndex == index)
+                                                .onHover { isHovered in
+                                                    hoveredIndex = isHovered ? index : nil
+                                                }
+                                                .onTapGesture {
+                                                    if selectedIndex == index {
+                                                        executeSelection(result)
+                                                    } else {
+                                                        selectedIndex = index
+                                                    }
+                                                }
+                                                .id(index)
                                         }
-                                        .onTapGesture {
-                                            if selectedIndex == index {
-                                                executeSelection(result)
-                                            } else {
-                                                selectedIndex = index
-                                            }
-                                        }
-                                        .id(index)
+                                    }
                                 }
                             }
                         }
@@ -119,6 +118,50 @@ struct ContentView: View {
         .onChange(of: searchService.commandResults) { _ in
             updateWindowSize()
         }
+    }
+
+    private func sectionHeader(_ title: String) -> some View {
+        HStack {
+            Text(title)
+                .font(.system(size: 10, weight: .bold))
+                .foregroundColor(Theme.textSecondary.opacity(0.8))
+                .padding(.horizontal, 8)
+                .padding(.vertical, 4)
+            Spacer()
+        }
+        .background(VisualEffectView(material: .hudWindow, blendingMode: .behindWindow))
+    }
+
+    private struct ResultGroup {
+        let type: ItemType
+        let items: [SearchResult]
+    }
+
+    private func groupResults(_ results: [SearchResult]) -> [ResultGroup] {
+        var appItems: [SearchResult] = []
+        var folderItems: [SearchResult] = []
+        
+        // Find which type has the overall top result
+        let topType = results.first?.Item.itemType
+        
+        for result in results {
+            if result.Item.itemType == .app {
+                appItems.append(result)
+            } else {
+                folderItems.append(result)
+            }
+        }
+        
+        var groups: [ResultGroup] = []
+        if topType == .app {
+            if !appItems.isEmpty { groups.append(ResultGroup(type: .app, items: appItems)) }
+            if !folderItems.isEmpty { groups.append(ResultGroup(type: .folder, items: folderItems)) }
+        } else {
+            if !folderItems.isEmpty { groups.append(ResultGroup(type: .folder, items: folderItems)) }
+            if !appItems.isEmpty { groups.append(ResultGroup(type: .app, items: appItems)) }
+        }
+        
+        return groups
     }
 
     private func setupNotificationObservers() {

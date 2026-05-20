@@ -82,8 +82,15 @@ typedef struct { void *data; GoInt len; GoInt cap; } GoSlice;
 extern "C" {
 #endif
 
+
+// Initialize the Go engine. This will be called from Swift.
 extern void InitEngine(void);
+
+// Search for items. Returns a JSON string of results.
+// Swift is responsible for freeing the returned C string.
 extern char* SearchApps(char* query);
+
+// Mark an app as selected to update its frecency score.
 extern void MarkSelected(char* path);
 
 #ifdef __cplusplus
