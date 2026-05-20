@@ -4,12 +4,12 @@ import AppKit
 struct Theme {
     // Colors
     static let windowBackground = Color(NSColor.windowBackgroundColor).opacity(0.8)
-    static let selectionBackground = Color.accentColor
+    static let selectionBackground = Color.accentColor.opacity(0.15)
     static let hoverBackground = Color.primary.opacity(0.05)
     
     static let textPrimary = Color.primary
     static let textSecondary = Color.secondary
-    static let textSelected = Color.white
+    static let textSelected = Color.primary
     
     static let searchIconColor = Color.gray
     
