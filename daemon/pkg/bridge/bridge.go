@@ -38,7 +38,19 @@ func InitEngine() {
 		dirs := []string{
 			"/Applications",
 			"/System/Applications",
-			filepath.Join(homeDir, "Applications"),
+		}
+
+		// Track added directories to avoid duplicates
+		added := map[string]bool{
+			"/Applications":        true,
+			"/System/Applications": true,
+		}
+
+		// Add user Applications if it exists and isn't a duplicate
+		userApps := filepath.Join(homeDir, "Applications")
+		if _, err := os.Stat(userApps); err == nil {
+			dirs = append(dirs, userApps)
+			added[userApps] = true
 		}
 
 		// Dynamically add all non-hidden directories in homeDir
@@ -46,12 +58,13 @@ func InitEngine() {
 		if err == nil {
 			for _, entry := range entries {
 				if entry.IsDir() && !strings.HasPrefix(entry.Name(), ".") {
+					path := filepath.Join(homeDir, entry.Name())
 					// Skip directories already added or typically redundant
 					name := entry.Name()
-					if name == "Library" || name == "Applications" {
+					if name == "Library" || added[path] {
 						continue
 					}
-					dirs = append(dirs, filepath.Join(homeDir, name))
+					dirs = append(dirs, path)
 				}
 			}
 		}

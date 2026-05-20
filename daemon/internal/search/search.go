@@ -48,34 +48,39 @@ func Items(query string, items []indexer.IndexItem) []Result {
 	}
 
 	sort.SliceStable(results, func(i, j int) bool {
-		// 1. Relevance Score (Fuzzy match)
-		// sahilm/fuzzy scores: higher is better match.
-		// We multiply by a large factor to make it the primary signal.
-		scoreI := float64(results[i].Score) * 1000
-		scoreJ := float64(results[j].Score) * 1000
+		scoreI := float64(results[i].Score) * 10
+		scoreJ := float64(results[j].Score) * 10
+
+		lowerQuery := strings.ToLower(query)
+		nameI := strings.ToLower(results[i].Item.Name)
+		nameJ := strings.ToLower(results[j].Item.Name)
+
+		// 1. Exact Name Match (Highest priority)
+		if nameI == lowerQuery {
+			scoreI += 100000
+		}
+		if nameJ == lowerQuery {
+			scoreJ += 100000
+		}
 
 		// 2. Prefix Match Bonus
-		// If the name starts with the query, give it a significant boost.
-		lowerQuery := strings.ToLower(query)
-		if strings.HasPrefix(strings.ToLower(results[i].Item.Name), lowerQuery) {
-			scoreI += 5000
+		if strings.HasPrefix(nameI, lowerQuery) {
+			scoreI += 20000
 		}
-		if strings.HasPrefix(strings.ToLower(results[j].Item.Name), lowerQuery) {
-			scoreJ += 5000
+		if strings.HasPrefix(nameJ, lowerQuery) {
+			scoreJ += 20000
 		}
 
-		// 3. Application Boost
-		// Applications should generally outrank folders if relevance is close.
+		// 3. Application Type Boost
+		// Applications get a massive boost to keep them above folders.
 		if results[i].Item.Type == indexer.TypeApp {
-			scoreI += 3000
+			scoreI += 50000
 		}
 		if results[j].Item.Type == indexer.TypeApp {
-			scoreJ += 3000
+			scoreJ += 50000
 		}
 
-		// 4. Frecency (Frequency + Recency)
-		// Frecency should be a tie-breaker or subtle adjustment, not the primary driver.
-		// A single click (Frequency 1) should not outrank a prefix match.
+		// 4. Frecency (Subtle tie-breaker)
 		scoreI += frecencyRank(results[i].Item)
 		scoreJ += frecencyRank(results[j].Item)
 
