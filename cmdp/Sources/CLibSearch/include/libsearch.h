@@ -93,6 +93,10 @@ extern char* SearchApps(char* query);
 // Reset the index by clearing the database.
 extern void ResetIndex(void);
 
+// Get overall system metrics and top processes as JSON.
+// Swift is responsible for freeing the returned C string.
+extern char* GetSystemStats(void);
+
 #ifdef __cplusplus
 }
 #endif

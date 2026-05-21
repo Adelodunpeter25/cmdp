@@ -10,12 +10,14 @@ import (
 	"sync"
 
 	"github.com/Adelodunpeter25/cmdp/daemon/internal/indexer"
+	"github.com/Adelodunpeter25/cmdp/daemon/internal/ps"
 	"github.com/Adelodunpeter25/cmdp/daemon/internal/search"
 )
 
 var (
-	manager *indexer.Manager
-	once    sync.Once
+	manager      *indexer.Manager
+	statsManager *ps.StatsManager
+	once         sync.Once
 )
 
 // Initialize the Go engine. This will be called from Swift.
@@ -75,6 +77,7 @@ func InitEngine() {
 			return
 		}
 
+		statsManager = ps.NewStatsManager()
 		log.Println("Bridge: Go Engine initialized successfully")
 	})
 }
@@ -114,6 +117,27 @@ func ResetIndex() {
 		return
 	}
 	manager.Reset()
+}
+
+// GetSystemStats retrieves and returns overall system metrics and top processes as JSON.
+//export GetSystemStats
+func GetSystemStats() *C.char {
+	if statsManager == nil {
+		return C.CString("{}")
+	}
+
+	stats, err := statsManager.GetStats()
+	if err != nil {
+		log.Printf("Bridge: Failed to get system stats: %v", err)
+		return C.CString("{}")
+	}
+
+	jsonData, err := json.Marshal(stats)
+	if err != nil {
+		return C.CString("{}")
+	}
+
+	return C.CString(string(jsonData))
 }
 
 func main() {
