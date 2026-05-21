@@ -379,10 +379,19 @@ struct ResultRow: View {
                     .padding(4)
             }
 
-            Text(result.Item.Name)
-                .font(.system(size: 14, weight: isSelected ? .semibold : .regular))
-                .foregroundColor(isSelected ? Theme.textSelected : Theme.textPrimary)
-                .lineLimit(1)
+            VStack(alignment: .leading, spacing: 1) {
+                Text(result.Item.Name)
+                    .font(.system(size: 14, weight: isSelected ? .semibold : .regular))
+                    .foregroundColor(isSelected ? Theme.textSelected : Theme.textPrimary)
+                    .lineLimit(1)
+
+                if result.Item.itemType == .folder {
+                    Text(result.Item.Path)
+                        .font(.system(size: 10))
+                        .foregroundColor(isSelected ? Theme.textSelected.opacity(0.7) : Theme.textSecondary)
+                        .lineLimit(1)
+                }
+            }
 
             Spacer()
 
