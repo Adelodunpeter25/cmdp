@@ -35,3 +35,5 @@ daemon/build/
 cmdp/.build/
 *.app/
 *.dmg
+.antigravitycli/
+
