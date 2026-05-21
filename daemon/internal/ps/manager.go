@@ -123,10 +123,15 @@ func (m *StatsManager) GetStats() (*SystemStats, error) {
 		topMemory = []ProcessInfo{}
 	}
 
+	usedMem, err := getUsedMemory()
+	if err != nil {
+		usedMem = vMem.Used
+	}
+
 	return &SystemStats{
 		CPUUsage:       cpuUsage,
 		TotalMemory:    vMem.Total,
-		UsedMemory:     vMem.Used,
+		UsedMemory:     usedMem,
 		TopMemoryProcs: topMemory,
 		TopCPUProcs:    topCPU,
 	}, nil
