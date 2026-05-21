@@ -441,21 +441,3 @@ struct VisualEffectView: NSViewRepresentable {
     }
 }
 
-struct EmptyStateView: View {
-    var body: some View {
-        VStack(spacing: 12) {
-            Spacer()
-            Image(systemName: "command")
-                .font(.system(size: 48))
-                .foregroundColor(Theme.textSecondary.opacity(0.3))
-            Text("Search apps and folders...")
-                .font(.headline)
-                .foregroundColor(Theme.textSecondary)
-            Text("Type a name to get started")
-                .font(.subheadline)
-                .foregroundColor(Theme.textSecondary.opacity(0.6))
-            Spacer()
-        }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
-    }
-}
