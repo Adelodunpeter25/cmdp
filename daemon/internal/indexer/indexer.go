@@ -3,8 +3,9 @@ package indexer
 type ItemType string
 
 const (
-	TypeApp    ItemType = "app"
-	TypeFolder ItemType = "folder"
+	TypeApp     ItemType = "app"
+	TypeFolder  ItemType = "folder"
+	TypeCommand ItemType = "command"
 )
 
 type IndexItem struct {

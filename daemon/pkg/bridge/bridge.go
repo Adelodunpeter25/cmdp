@@ -89,7 +89,14 @@ func SearchApps(query *C.char) *C.char {
 
 	goQuery := C.GoString(query)
 	items := manager.GetItems()
-	results := search.Items(goQuery, items)
+
+	// Merge system commands into the search pool
+	commands := indexer.GetCommands()
+	allSearchItems := make([]indexer.IndexItem, 0, len(items)+len(commands))
+	allSearchItems = append(allSearchItems, items...)
+	allSearchItems = append(allSearchItems, commands...)
+
+	results := search.Items(goQuery, allSearchItems)
 
 	// Convert results to JSON for easy parsing in Swift
 	jsonData, err := json.Marshal(results)

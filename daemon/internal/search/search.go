@@ -26,8 +26,9 @@ const (
 // Per-group result caps — limits the number of items sent back over the CGo
 // bridge so Swift doesn't decode/layout hundreds of irrelevant results.
 const (
-	maxAppResults    = 8
-	maxFolderResults = 5
+	maxAppResults     = 8
+	maxFolderResults  = 5
+	maxCommandResults = 5
 )
 
 // acronym returns the string formed by the first letter of each word in s.
@@ -132,11 +133,12 @@ func Items(query string, items []indexer.IndexItem) []Result {
 		return strings.ToLower(results[i].Item.Name) < strings.ToLower(results[j].Item.Name)
 	})
 
-	// Apply per-group caps: return at most maxAppResults apps and
-	// maxFolderResults folders (both already in score-descending order).
+	// Apply per-group caps: return at most maxAppResults apps,
+	// maxFolderResults folders, and maxCommandResults commands
+	// (all already in score-descending order).
 	// Use make() — a nil slice marshals to JSON null; an empty slice marshals to [].
-	capped := make([]Result, 0, maxAppResults+maxFolderResults)
-	appCount, folderCount := 0, 0
+	capped := make([]Result, 0, maxAppResults+maxFolderResults+maxCommandResults)
+	appCount, folderCount, commandCount := 0, 0, 0
 	for _, r := range results {
 		switch r.Item.Type {
 		case indexer.TypeApp:
@@ -148,6 +150,11 @@ func Items(query string, items []indexer.IndexItem) []Result {
 			if folderCount < maxFolderResults {
 				capped = append(capped, r)
 				folderCount++
+			}
+		case indexer.TypeCommand:
+			if commandCount < maxCommandResults {
+				capped = append(capped, r)
+				commandCount++
 			}
 		}
 	}

@@ -56,7 +56,7 @@ struct ContentView: View {
         for result in groupedResults {
             let type = result.Item.itemType
             if type != lastType {
-                let title = type == .app ? "APPLICATIONS" : "FOLDERS"
+                let title = type == .app ? "APPLICATIONS" : (type == .folder ? "FOLDERS" : "COMMANDS")
                 items.append(.header(title))
                 lastType = type
             }
@@ -72,12 +72,12 @@ struct ContentView: View {
         VStack(spacing: 0) {
             // Search Bar
             HStack {
-                Image(systemName: searchService.isCommandMode ? "command" : "magnifyingglass")
+                Image(systemName: "command")
                     .font(.system(size: 22, weight: .light))
                     .foregroundColor(Theme.searchIconColor)
                     .padding(.leading, 4)
 
-                TextField("Search apps and folders...", text: $searchText)
+                TextField("Search file, folder or command...", text: $searchText)
                     .textFieldStyle(.plain)
                     .font(.system(size: 22, weight: .light))
                     .focused($isSearchFieldFocused)
@@ -105,17 +105,13 @@ struct ContentView: View {
             .background(Theme.windowBackground)
 
             // Results Area
-            if !searchText.isEmpty && (!searchService.results.isEmpty || !searchService.commandResults.isEmpty) {
+            if !searchText.isEmpty && !searchService.results.isEmpty {
                 Divider()
 
                 ScrollViewReader { proxy in
                     ScrollView {
                         LazyVStack(spacing: Theme.rowSpacing, pinnedViews: [.sectionHeaders]) {
-                            if searchService.isCommandMode {
-                                commandSection
-                            } else {
-                                resultSection
-                            }
+                            resultSection
                         }
                         .padding(.horizontal, 8)
                         .padding(.vertical, 8)
@@ -141,28 +137,9 @@ struct ContentView: View {
             setupNotificationObservers()
         }
         .onChange(of: searchService.results) { _ in updateWindowSize() }
-        .onChange(of: searchService.commandResults) { _ in updateWindowSize() }
     }
 
     // MARK: - Sub-views
-
-    @ViewBuilder
-    private var commandSection: some View {
-        Section(header: sectionHeader("COMMANDS")) {
-            ForEach(Array(searchService.commandResults.enumerated()), id: \.offset) { index, command in
-                CommandRow(
-                    command: command,
-                    isSelected: selectedIndex == index,
-                    isHovered: hoveredIndex == index
-                )
-                .onHover { hoveredIndex = $0 ? index : nil }
-                .onTapGesture {
-                    selectedIndex == index ? executeCommand(command) : (selectedIndex = index)
-                }
-                .id("cmd-\(index)")
-            }
-        }
-    }
 
     @ViewBuilder
     private var resultSection: some View {
@@ -171,9 +148,6 @@ struct ContentView: View {
             switch item {
             case .header(let title):
                 sectionHeader(title)
-                    // Pin headers using a pinned Section wrapper per header.
-                    // We can't use LazyVStack pinnedViews here because headers
-                    // are mixed into the flat list; they still visually float.
 
             case .result(let result, let index):
                 ResultRow(
@@ -192,27 +166,36 @@ struct ContentView: View {
 
     // MARK: - Grouping
 
-    /// Returns results sorted: apps (by score desc) then folders (by score desc),
-    /// or folders first if the top folder outscores the top app.
-    /// Deduplicates by path.
     private func groupAndSort(_ results: [SearchResult]) -> [SearchResult] {
         var seen = Set<String>()
         var apps: [SearchResult] = []
         var folders: [SearchResult] = []
+        var commands: [SearchResult] = []
 
         for result in results {
             guard !seen.contains(result.Item.Path) else { continue }
             seen.insert(result.Item.Path)
             switch result.Item.itemType {
-            case .app:    apps.append(result)
-            case .folder: folders.append(result)
+            case .app:     apps.append(result)
+            case .folder:  folders.append(result)
+            case .command: commands.append(result)
             }
         }
 
         // Put the group with the higher top score first.
-        let appTop    = apps.first?.Score    ?? Int.min
-        let folderTop = folders.first?.Score ?? Int.min
-        return folderTop > appTop ? folders + apps : apps + folders
+        let appTop     = apps.first?.Score     ?? Int.min
+        let folderTop  = folders.first?.Score  ?? Int.min
+        let commandTop = commands.first?.Score ?? Int.min
+
+        var groups = [
+            (type: ItemType.app, items: apps, topScore: appTop),
+            (type: ItemType.folder, items: folders, topScore: folderTop),
+            (type: ItemType.command, items: commands, topScore: commandTop)
+        ]
+
+        groups.sort { $0.topScore > $1.topScore }
+
+        return groups.flatMap { $0.items }
     }
 
     // MARK: - Section header
@@ -268,9 +251,7 @@ struct ContentView: View {
             guard let keyWindow = NSApp.keyWindow,
                   keyWindow.contentView?.closestHostingView() != nil else { return event }
 
-            let resultCount = searchService.isCommandMode
-                ? searchService.commandResults.count
-                : groupedResults.count
+            let resultCount = groupedResults.count
 
             switch event.keyCode {
             case 125: // ↓
@@ -280,11 +261,7 @@ struct ContentView: View {
                 if selectedIndex > 0 { selectedIndex -= 1 }
                 return nil
             case 36: // ↵ Enter
-                if searchService.isCommandMode {
-                    if selectedIndex < searchService.commandResults.count {
-                        executeCommand(searchService.commandResults[selectedIndex])
-                    }
-                } else if selectedIndex < groupedResults.count {
+                if selectedIndex < groupedResults.count {
                     executeSelection(groupedResults[selectedIndex])
                 }
                 return nil
@@ -306,49 +283,24 @@ struct ContentView: View {
     }
 
     func executeSelection(_ result: SearchResult) {
-        NSWorkspace.shared.open(URL(fileURLWithPath: result.Item.Path))
+        if result.Item.itemType == .command {
+            executeCommand(result.Item.Path)
+        } else {
+            NSWorkspace.shared.open(URL(fileURLWithPath: result.Item.Path))
+        }
         NSApp.hide(nil)
     }
 
-    func executeCommand(_ command: Command) {
-        command.script == "RESET_INDEX"
-            ? searchService.resetIndex()
-            : CommandService.shared.execute(command)
-        NSApp.hide(nil)
+    private func executeCommand(_ commandId: String) {
+        if commandId == "reset-index" {
+            searchService.resetIndex()
+        } else if let command = Command.allCommands.first(where: { $0.id == commandId }) {
+            CommandService.shared.execute(command)
+        }
     }
 }
 
 // MARK: - Row views
-
-struct CommandRow: View {
-    let command: Command
-    let isSelected: Bool
-    let isHovered: Bool
-
-    var body: some View {
-        HStack(spacing: 12) {
-            Image(systemName: command.iconName)
-                .resizable()
-                .aspectRatio(contentMode: .fit)
-                .frame(width: Theme.iconSize - 4, height: Theme.iconSize - 4)
-                .foregroundColor(isSelected ? Theme.textSelected : .blue)
-                .padding(4)
-
-            Text(command.name)
-                .font(.system(size: 14, weight: isSelected ? .semibold : .regular))
-                .foregroundColor(isSelected ? Theme.textSelected : Theme.textPrimary)
-
-            Spacer()
-        }
-        .padding(.vertical, Theme.rowPaddingVertical)
-        .padding(.horizontal, Theme.rowPaddingHorizontal)
-        .background(
-            RoundedRectangle(cornerRadius: Theme.rowCornerRadius)
-                .fill(isSelected ? Color.blue : (isHovered ? Theme.hoverBackground : Color.clear))
-        )
-        .contentShape(Rectangle())
-    }
-}
 
 struct ResultRow: View {
     let result: SearchResult
@@ -368,12 +320,19 @@ struct ResultRow: View {
                         .frame(width: Theme.iconSize, height: Theme.iconSize)
                         .foregroundColor(Theme.textSecondary)
                 }
-            } else {
+            } else if result.Item.itemType == .folder {
                 Image(systemName: "folder.fill")
                     .resizable()
                     .aspectRatio(contentMode: .fit)
                     .frame(width: Theme.iconSize, height: Theme.iconSize)
                     .foregroundColor(.blue)
+            } else if result.Item.itemType == .command {
+                Image(systemName: IconManager.shared.getCommandIcon(for: result.Item.Path))
+                    .resizable()
+                    .aspectRatio(contentMode: .fit)
+                    .frame(width: Theme.iconSize - 4, height: Theme.iconSize - 4)
+                    .foregroundColor(isSelected ? Theme.textSelected : .blue)
+                    .padding(4)
             }
 
             VStack(alignment: .leading, spacing: 1) {
@@ -381,10 +340,17 @@ struct ResultRow: View {
                     .font(.system(size: 14, weight: isSelected ? .semibold : .regular))
                     .foregroundColor(isSelected ? Theme.textSelected : Theme.textPrimary)
 
-                Text(result.Item.Path)
-                    .font(.system(size: 10))
-                    .foregroundColor(isSelected ? Theme.textSelected.opacity(0.7) : Theme.textSecondary)
-                    .lineLimit(1)
+                if result.Item.itemType != .command {
+                    Text(result.Item.Path)
+                        .font(.system(size: 10))
+                        .foregroundColor(isSelected ? Theme.textSelected.opacity(0.7) : Theme.textSecondary)
+                        .lineLimit(1)
+                } else {
+                    Text("System Command")
+                        .font(.system(size: 10))
+                        .foregroundColor(isSelected ? Theme.textSelected.opacity(0.7) : Theme.textSecondary)
+                        .lineLimit(1)
+                }
             }
             Spacer()
         }
@@ -396,6 +362,7 @@ struct ResultRow: View {
         )
         .contentShape(Rectangle())
     }
+
 }
 
 // MARK: - Utilities

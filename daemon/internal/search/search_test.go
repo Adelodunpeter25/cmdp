@@ -154,3 +154,24 @@ func TestAcronym(t *testing.T) {
 		}
 	}
 }
+
+func TestCommandMatching(t *testing.T) {
+	items := []indexer.IndexItem{
+		{Name: "Sleep", Path: "sleep", Type: indexer.TypeCommand},
+		{Name: "Restart...", Path: "restart", Type: indexer.TypeCommand},
+		{Name: "Google Chrome", Path: "/Applications/Google Chrome.app", Type: indexer.TypeApp},
+	}
+
+	// Searching for "sleep" should match "Sleep" first
+	results := Items("sleep", items)
+	if len(results) == 0 {
+		t.Fatalf("expected some results, got 0")
+	}
+	if results[0].Item.Name != "Sleep" {
+		t.Errorf("expected 'Sleep' first, got %q", results[0].Item.Name)
+	}
+	if results[0].Item.Type != indexer.TypeCommand {
+		t.Errorf("expected type 'command', got %q", results[0].Item.Type)
+	}
+}
+

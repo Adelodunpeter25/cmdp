@@ -33,4 +33,16 @@ class IconManager: ObservableObject {
         
         return nil
     }
+
+    func getCommandIcon(for commandId: String) -> String {
+        switch commandId {
+        case "sleep":       return "moon.fill"
+        case "restart":     return "arrow.clockwise"
+        case "shutdown":    return "power"
+        case "lock":        return "lock.fill"
+        case "empty-trash": return "trash"
+        case "reset-index": return "arrow.counterclockwise.circle"
+        default:            return "command"
+        }
+    }
 }

@@ -6,7 +6,7 @@ BUILD_DIR=build
 
 .PHONY: all build clean test lib
 
-all: build
+all: build lib
 
 build:
 	mkdir -p $(BUILD_DIR)

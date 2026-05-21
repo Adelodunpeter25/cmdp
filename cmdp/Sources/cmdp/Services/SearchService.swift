@@ -3,8 +3,6 @@ import CLibSearch
 
 class SearchService: ObservableObject {
     @Published var results: [SearchResult] = []
-    @Published var commandResults: [Command] = []
-    @Published var isCommandMode: Bool = false
     
     private let searchQueue = DispatchQueue(label: "cmdp.search.queue", qos: .userInitiated)
     private let stateQueue = DispatchQueue(label: "cmdp.search.state")
@@ -21,38 +19,10 @@ class SearchService: ObservableObject {
             return searchRevision
         }
 
-        let isCmdMode = query.hasPrefix(">")
-        
-        // Update mode and clear irrelevant results immediately on the main thread
-        // to prevent stale data from showing during the transition.
-        DispatchQueue.main.async {
-            self.isCommandMode = isCmdMode
-            if isCmdMode {
-                self.results = []
-            } else {
-                self.commandResults = []
-            }
-        }
-
-        let searchText = isCmdMode ? String(query.dropFirst()).trimmingCharacters(in: .whitespaces) : query
-
         searchQueue.async { [weak self] in
             guard let self else { return }
 
-            var searchResults: [SearchResult] = []
-            var cmdResults: [Command] = []
-
-            if isCmdMode {
-                if searchText.isEmpty {
-                    cmdResults = Command.allCommands
-                } else {
-                    cmdResults = Command.allCommands.filter { 
-                        $0.name.lowercased().contains(searchText.lowercased()) 
-                    }
-                }
-            } else {
-                searchResults = self.performSearch(query: searchText)
-            }
+            let searchResults = self.performSearch(query: query)
 
             let shouldPublish = self.stateQueue.sync {
                 revision == self.searchRevision
@@ -62,7 +32,6 @@ class SearchService: ObservableObject {
 
             DispatchQueue.main.async {
                 self.results = searchResults
-                self.commandResults = cmdResults
             }
         }
     }

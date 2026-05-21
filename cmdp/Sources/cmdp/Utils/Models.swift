@@ -3,6 +3,7 @@ import Foundation
 enum ItemType: String, Codable {
     case app = "app"
     case folder = "folder"
+    case command = "command"
 }
 
 struct SearchResult: Codable, Identifiable, Equatable {
