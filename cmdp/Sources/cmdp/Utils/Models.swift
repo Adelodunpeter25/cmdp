@@ -25,3 +25,19 @@ struct IndexItem: Codable, Equatable {
         case itemType = "Type"
     }
 }
+
+struct ProcessInfo: Codable, Identifiable, Equatable {
+    var id: Int32 { pid }
+    let pid: Int32
+    let name: String
+    let cpu: Double
+    let memory: UInt64
+}
+
+struct SystemStats: Codable, Equatable {
+    let cpuUsage: Double
+    let totalMemory: UInt64
+    let usedMemory: UInt64
+    let topMemoryProcs: [ProcessInfo]
+    let topCPUProcs: [ProcessInfo]
+}

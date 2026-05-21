@@ -29,6 +29,7 @@ private enum DisplayItem: Identifiable {
 
 struct ContentView: View {
     @StateObject private var searchService = SearchService()
+    @StateObject private var processService = ProcessService()
     @State private var searchText: String = ""
     @State private var selectedIndex: Int = 0
     @State private var hoveredIndex: Int? = nil
@@ -83,6 +84,11 @@ struct ContentView: View {
                     .focused($isSearchFieldFocused)
                     .onChange(of: searchText) { newValue in
                         searchDebounceItem?.cancel()
+                        if newValue.isEmpty {
+                            processService.startPolling()
+                        } else {
+                            processService.stopPolling()
+                        }
                         let item = DispatchWorkItem {
                             searchService.search(query: newValue)
                             selectedIndex = 0
@@ -104,27 +110,47 @@ struct ContentView: View {
             .padding(.vertical, 12)
             .background(Theme.windowBackground)
 
-            // Results Area
-            if !searchText.isEmpty && !searchService.results.isEmpty {
-                Divider()
+            // Results Area & Dashboard Empty State
+            if !searchText.isEmpty {
+                if !searchService.results.isEmpty {
+                    Divider()
 
-                ScrollViewReader { proxy in
-                    ScrollView {
-                        LazyVStack(spacing: Theme.rowSpacing, pinnedViews: [.sectionHeaders]) {
-                            resultSection
+                    ScrollViewReader { proxy in
+                        ScrollView {
+                            LazyVStack(spacing: Theme.rowSpacing, pinnedViews: [.sectionHeaders]) {
+                                resultSection
+                            }
+                            .padding(.horizontal, 8)
+                            .padding(.vertical, 8)
                         }
-                        .padding(.horizontal, 8)
-                        .padding(.vertical, 8)
+                        .frame(maxHeight: 350)
+                        .scrollIndicators(.hidden)
+                        .onChange(of: selectedIndex) { _ in
+                            // Scroll to the result item, not a header
+                            let targetId = "result-\(selectedIndex)-\(groupedResults[safe: selectedIndex]?.id ?? "")"
+                            proxy.scrollTo(targetId, anchor: .center)
+                        }
                     }
-                    .frame(maxHeight: 350)
-                    .scrollIndicators(.hidden)
-                    .onChange(of: selectedIndex) { _ in
-                        // Scroll to the result item, not a header
-                        let targetId = "result-\(selectedIndex)-\(groupedResults[safe: selectedIndex]?.id ?? "")"
-                        proxy.scrollTo(targetId, anchor: .center)
-                    }
+                    .transition(.opacity)
                 }
-                .transition(.opacity)
+            } else {
+                Divider()
+                if let stats = processService.systemStats {
+                    ProcessCard(stats: stats)
+                        .transition(.opacity)
+                } else {
+                    HStack {
+                        Spacer()
+                        ProgressView()
+                            .scaleEffect(0.8)
+                            .padding()
+                        Text("Loading system stats...")
+                            .font(.system(size: 12))
+                            .foregroundColor(Theme.textSecondary)
+                        Spacer()
+                    }
+                    .frame(height: 140)
+                }
             }
         }
         .frame(width: 600)
@@ -135,8 +161,15 @@ struct ContentView: View {
             updateWindowSize()
             setupKeyEventMonitor()
             setupNotificationObservers()
+            if searchText.isEmpty {
+                processService.startPolling()
+            }
+        }
+        .onDisappear {
+            processService.stopPolling()
         }
         .onChange(of: searchService.results) { _ in updateWindowSize() }
+        .onChange(of: processService.systemStats) { _ in updateWindowSize() }
     }
 
     // MARK: - Sub-views
@@ -217,7 +250,18 @@ struct ContentView: View {
     private func setupNotificationObservers() {
         NotificationCenter.default.addObserver(
             forName: NSWindow.didBecomeKeyNotification, object: nil, queue: .main
-        ) { _ in self.selectAllSearchText() }
+        ) { _ in
+            self.selectAllSearchText()
+            if self.searchText.isEmpty {
+                self.processService.startPolling()
+            }
+        }
+        
+        NotificationCenter.default.addObserver(
+            forName: NSWindow.didResignKeyNotification, object: nil, queue: .main
+        ) { _ in
+            self.processService.stopPolling()
+        }
     }
 
     private func selectAllSearchText() {
