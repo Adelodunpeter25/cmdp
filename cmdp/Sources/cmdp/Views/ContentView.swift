@@ -379,24 +379,22 @@ struct ResultRow: View {
                     .padding(4)
             }
 
-            VStack(alignment: .leading, spacing: 1) {
-                Text(result.Item.Name)
-                    .font(.system(size: 14, weight: isSelected ? .semibold : .regular))
-                    .foregroundColor(isSelected ? Theme.textSelected : Theme.textPrimary)
+            Text(result.Item.Name)
+                .font(.system(size: 14, weight: isSelected ? .semibold : .regular))
+                .foregroundColor(isSelected ? Theme.textSelected : Theme.textPrimary)
+                .lineLimit(1)
 
-                if result.Item.itemType != .command {
-                    Text(result.Item.Path)
-                        .font(.system(size: 10))
-                        .foregroundColor(isSelected ? Theme.textSelected.opacity(0.7) : Theme.textSecondary)
-                        .lineLimit(1)
-                } else {
-                    Text("System Command")
-                        .font(.system(size: 10))
-                        .foregroundColor(isSelected ? Theme.textSelected.opacity(0.7) : Theme.textSecondary)
-                        .lineLimit(1)
-                }
-            }
             Spacer()
+
+            Text(typeLabel(for: result.Item.itemType))
+                .font(.system(size: 10, weight: .medium))
+                .foregroundColor(isSelected ? Theme.textSelected.opacity(0.7) : Theme.textSecondary.opacity(0.8))
+                .padding(.horizontal, 6)
+                .padding(.vertical, 2)
+                .background(
+                    RoundedRectangle(cornerRadius: 4)
+                        .fill(isSelected ? Color.white.opacity(0.15) : Theme.hoverBackground)
+                )
         }
         .padding(.vertical, Theme.rowPaddingVertical)
         .padding(.horizontal, Theme.rowPaddingHorizontal)
@@ -407,6 +405,13 @@ struct ResultRow: View {
         .contentShape(Rectangle())
     }
 
+    private func typeLabel(for type: ItemType) -> String {
+        switch type {
+        case .app: return "Application"
+        case .folder: return "Folder"
+        case .command: return "Command"
+        }
+    }
 }
 
 // MARK: - Utilities
