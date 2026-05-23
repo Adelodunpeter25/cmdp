@@ -4,6 +4,7 @@ enum ItemType: String, Codable {
     case app = "app"
     case folder = "folder"
     case command = "command"
+    case file = "file"
 }
 
 struct SearchResult: Codable, Identifiable, Equatable {

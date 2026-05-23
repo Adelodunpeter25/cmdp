@@ -43,13 +43,23 @@ class SearchService: ObservableObject {
     private func performSearch(query: String) -> [SearchResult] {
         var decodedResults: [SearchResult] = []
 
-        query.withCString { cQuery in
-            guard let cResult = SearchApps(UnsafeMutablePointer(mutating: cQuery)) else {
+        let isFileSearch = query.hasPrefix("/")
+        let cleanQuery = isFileSearch ? String(query.dropFirst()) : query
+
+        cleanQuery.withCString { cQuery in
+            let cResult: UnsafeMutablePointer<Int8>?
+            if isFileSearch {
+                cResult = SearchFiles(UnsafeMutablePointer(mutating: cQuery))
+            } else {
+                cResult = SearchApps(UnsafeMutablePointer(mutating: cQuery))
+            }
+
+            guard let rawResult = cResult else {
                 return
             }
-            defer { free(cResult) }
+            defer { free(rawResult) }
 
-            let jsonString = String(cString: cResult)
+            let jsonString = String(cString: rawResult)
 
             guard let data = jsonString.data(using: .utf8) else {
                 return

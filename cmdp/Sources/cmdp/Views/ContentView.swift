@@ -42,7 +42,10 @@ struct ContentView: View {
     /// folders by score).  This is the single source of truth for
     /// selectedIndex and keyboard navigation.
     private var groupedResults: [SearchResult] {
-        groupAndSort(searchService.results)
+        if searchText.hasPrefix("/") {
+            return searchService.results
+        }
+        return groupAndSort(searchService.results)
     }
 
     /// The full list interleaved with section headers, ready for ForEach.
@@ -73,7 +76,7 @@ struct ContentView: View {
         VStack(spacing: 0) {
             // Search Bar
             HStack {
-                Image(systemName: "command")
+                Image(systemName: searchText.hasPrefix("/") ? "magnifyingglass" : "command")
                     .font(.system(size: 22, weight: .light))
                     .foregroundColor(Theme.searchIconColor)
                     .padding(.leading, 4)
@@ -115,23 +118,33 @@ struct ContentView: View {
                 if !searchService.results.isEmpty {
                     Divider()
 
-                    ScrollViewReader { proxy in
-                        ScrollView {
-                            LazyVStack(spacing: Theme.rowSpacing, pinnedViews: [.sectionHeaders]) {
-                                resultSection
+                    if searchText.hasPrefix("/") {
+                        FileSearchView(
+                            results: groupedResults,
+                            selectedIndex: selectedIndex,
+                            hoveredIndex: $hoveredIndex,
+                            onTapRow: { result in executeSelection(result) }
+                        )
+                        .transition(.opacity)
+                    } else {
+                        ScrollViewReader { proxy in
+                            ScrollView {
+                                LazyVStack(spacing: Theme.rowSpacing, pinnedViews: [.sectionHeaders]) {
+                                    resultSection
+                                }
+                                .padding(.horizontal, 8)
+                                .padding(.vertical, 8)
                             }
-                            .padding(.horizontal, 8)
-                            .padding(.vertical, 8)
+                            .frame(maxHeight: 350)
+                            .scrollIndicators(.hidden)
+                            .onChange(of: selectedIndex) { _ in
+                                // Scroll to the result item, not a header
+                                let targetId = "result-\(selectedIndex)-\(groupedResults[safe: selectedIndex]?.id ?? "")"
+                                proxy.scrollTo(targetId, anchor: .center)
+                            }
                         }
-                        .frame(maxHeight: 350)
-                        .scrollIndicators(.hidden)
-                        .onChange(of: selectedIndex) { _ in
-                            // Scroll to the result item, not a header
-                            let targetId = "result-\(selectedIndex)-\(groupedResults[safe: selectedIndex]?.id ?? "")"
-                            proxy.scrollTo(targetId, anchor: .center)
-                        }
+                        .transition(.opacity)
                     }
-                    .transition(.opacity)
                 }
             } else {
                 Divider()
@@ -212,6 +225,7 @@ struct ContentView: View {
             case .app:     apps.append(result)
             case .folder:  folders.append(result)
             case .command: commands.append(result)
+            case .file:    break
             }
         }
 
@@ -419,6 +433,7 @@ struct ResultRow: View {
         case .app: return "Application"
         case .folder: return "Folder"
         case .command: return "Command"
+        case .file: return "File"
         }
     }
 }
