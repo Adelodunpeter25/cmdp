@@ -31,6 +31,8 @@ struct ContentView: View {
     @StateObject private var searchService = SearchService()
     @StateObject private var processService = ProcessService()
     @State private var searchText: String = ""
+    @State private var previousSearchText: String = ""
+    @State private var backspaceOnSlashPressed: Bool = false
     @State private var selectedIndex: Int = 0
     @State private var hoveredIndex: Int? = nil
     @FocusState private var isSearchFieldFocused: Bool
@@ -87,6 +89,23 @@ struct ContentView: View {
                     .focused($isSearchFieldFocused)
                     .onChange(of: searchText) { newValue in
                         searchDebounceItem?.cancel()
+
+                        // Double backspace to remove "/" logic
+                        if previousSearchText == "/" && newValue == "" {
+                            if !backspaceOnSlashPressed {
+                                backspaceOnSlashPressed = true
+                                searchText = "/"
+                                previousSearchText = "/"
+                                return
+                            }
+                        }
+
+                        if newValue != "/" {
+                            backspaceOnSlashPressed = false
+                        }
+
+                        previousSearchText = newValue
+
                         if newValue.isEmpty {
                             processService.startPolling()
                         } else {
@@ -281,8 +300,18 @@ struct ContentView: View {
     private func selectAllSearchText() {
         isSearchFieldFocused = true
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.01) {
-            if let textField = NSApp.keyWindow?.firstResponder as? NSTextView {
-                textField.selectAll(nil)
+            if let textView = NSApp.keyWindow?.firstResponder as? NSTextView {
+                let text = textView.string
+                if text.hasPrefix("/") {
+                    let length = text.count
+                    if length > 1 {
+                        textView.setSelectedRange(NSRange(location: 1, length: length - 1))
+                    } else {
+                        textView.setSelectedRange(NSRange(location: 1, length: 0))
+                    }
+                } else {
+                    textView.selectAll(nil)
+                }
             }
         }
     }
@@ -308,6 +337,22 @@ struct ContentView: View {
         NSEvent.addLocalMonitorForEvents(matching: .keyDown) { event in
             guard let keyWindow = NSApp.keyWindow,
                   keyWindow.contentView?.closestHostingView() != nil else { return event }
+
+            // Custom select all for "/" prefixed searches (Cmd + A)
+            if event.modifierFlags.contains(.command) && event.charactersIgnoringModifiers == "a" {
+                if let textView = keyWindow.firstResponder as? NSTextView {
+                    let text = textView.string
+                    if text.hasPrefix("/") {
+                        let length = text.count
+                        if length > 1 {
+                            textView.setSelectedRange(NSRange(location: 1, length: length - 1))
+                        } else {
+                            textView.setSelectedRange(NSRange(location: 1, length: 0))
+                        }
+                        return nil // Consume event
+                    }
+                }
+            }
 
             let resultCount = groupedResults.count
 
