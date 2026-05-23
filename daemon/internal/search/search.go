@@ -1,6 +1,7 @@
 package search
 
 import (
+	"path/filepath"
 	"sort"
 	"strings"
 	"unicode"
@@ -177,6 +178,32 @@ func Files(query string, items []indexer.IndexItem) []Result {
 		sort.SliceStable(results, func(i, j int) bool {
 			return strings.ToLower(results[i].Item.Name) < strings.ToLower(results[j].Item.Name)
 		})
+		return results
+	}
+
+	// Handle Glob patterns
+	if strings.ContainsAny(query, "*?") {
+		var results []Result
+		lowerQuery := strings.ToLower(query)
+		for _, item := range items {
+			lowerName := strings.ToLower(item.Name)
+			// filepath.Match is used for the actual glob logic
+			if matched, _ := filepath.Match(lowerQuery, lowerName); matched {
+				// For glob matches, we use a base score + a bonus for shorter names
+				// (closer to the pattern)
+				score := scoreExactMatch - len(item.Name)
+				results = append(results, Result{Item: item, Score: score})
+			}
+		}
+
+		sort.SliceStable(results, func(i, j int) bool {
+			return results[i].Score > results[j].Score
+		})
+
+		// Cap at 15 results for glob files
+		if len(results) > 15 {
+			results = results[:15]
+		}
 		return results
 	}
 

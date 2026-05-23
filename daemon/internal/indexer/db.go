@@ -159,12 +159,23 @@ func (db *DB) InsertFiles(files []IndexItem) error {
 }
 
 // SearchFiles returns matching files using a case-insensitive LIKE search.
+// It supports glob-like wildcards (* and ?) by converting them to SQL LIKE syntax.
 func (db *DB) SearchFiles(query string) ([]IndexItem, error) {
 	if query == "" {
 		return []IndexItem{}, nil
 	}
 
-	rows, err := db.conn.Query("SELECT name, path FROM files WHERE name LIKE ? LIMIT 100", "%"+query+"%")
+	sqlQuery := query
+	if strings.ContainsAny(query, "*?") {
+		// Convert glob wildcards to SQL LIKE wildcards
+		sqlQuery = strings.ReplaceAll(sqlQuery, "*", "%")
+		sqlQuery = strings.ReplaceAll(sqlQuery, "?", "_")
+	} else {
+		// Default to substring match if no wildcards provided
+		sqlQuery = "%" + query + "%"
+	}
+
+	rows, err := db.conn.Query("SELECT name, path FROM files WHERE name LIKE ? LIMIT 100", sqlQuery)
 	if err != nil {
 		return nil, err
 	}

@@ -395,7 +395,8 @@ struct ContentView: View {
         if result.Item.itemType == .command {
             executeCommand(result.Item.Path)
         } else {
-            NSWorkspace.shared.open(URL(fileURLWithPath: result.Item.Path))
+            // Reveal in Finder (selects the file/folder in its parent directory)
+            NSWorkspace.shared.activateFileViewerSelecting([URL(fileURLWithPath: result.Item.Path)])
         }
         NSApp.hide(nil)
     }
