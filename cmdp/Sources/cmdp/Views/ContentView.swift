@@ -153,7 +153,7 @@ struct ContentView: View {
                     .transition(.opacity)
                 }
             } else {
-                if !searchText.isEmpty {
+                if !searchText.isEmpty && !groupedResults.isEmpty {
                     Divider()
                     if searchText.hasPrefix("/") {
                         FileSearchView(
@@ -187,7 +187,7 @@ struct ContentView: View {
                         }
                         .transition(.opacity)
                     }
-                } else {
+                } else if searchText.isEmpty {
                     Divider()
                     VStack(spacing: 0) {
                         WebSearchCard(
