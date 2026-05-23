@@ -130,25 +130,28 @@ jobs:
             GENERATE_APPCAST=$(find cmdp/.build -name "generate_appcast" -type f | head -n 1)
             
             if [[ -n "$GENERATE_APPCAST" ]]; then
-               # Move DMGs to a specific folder for appcast generation
+               # Sparkle does not allow multiple archives with the same bundle version.
+               # Generate the appcast from a single representative archive and keep
+               # both architecture-specific DMGs attached to the GitHub release.
                mkdir -p sparkle_assets
-               cp cmdp-x64.dmg cmdp-arm64.dmg sparkle_assets/
+               cp cmdp-x64.dmg sparkle_assets/
                
-               $GENERATE_APPCAST sparkle_assets/
-               
-               # The tool generates appcast.xml in the sparkle_assets folder
-               mv sparkle_assets/appcast.xml .
-               
-               # Commit appcast.xml back to the repo
-               git add appcast.xml
-               git commit -m "chore: update Sparkle appcast for v1" || true
-               git push origin main || true
-               
-               echo "Sparkle appcast updated and pushed."
+               if "$GENERATE_APPCAST" sparkle_assets/; then
+                 # The tool generates appcast.xml in the sparkle_assets folder
+                 mv sparkle_assets/appcast.xml .
+                 
+                 # Commit appcast.xml back to the repo
+                 git add appcast.xml
+                 git commit -m "chore: update Sparkle appcast for v1" || true
+                 git push origin main || true
+                 
+                 echo "Sparkle appcast updated and pushed."
+               else
+                 echo "⚠️  Sparkle appcast generation failed; continuing without updating appcast."
+               fi
             else
                echo "⚠️  generate_appcast tool not found!"
             fi
           else
             echo "⏭️  Skipping appcast generation (SPARKLE_PRIVATE_KEY missing)."
           fi
-
