@@ -142,7 +142,13 @@ struct ContentView: View {
                             results: groupedResults,
                             selectedIndex: selectedIndex,
                             hoveredIndex: $hoveredIndex,
-                            onTapRow: { result in executeSelection(result) }
+                            onTapRow: { index, result in
+                                if selectedIndex == index {
+                                    executeSelection(result)
+                                } else {
+                                    selectedIndex = index
+                                }
+                            }
                         )
                         .transition(.opacity)
                     } else {

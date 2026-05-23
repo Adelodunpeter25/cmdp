@@ -4,7 +4,7 @@ struct FileSearchView: View {
     let results: [SearchResult]
     let selectedIndex: Int
     @Binding var hoveredIndex: Int?
-    let onTapRow: (SearchResult) -> Void
+    let onTapRow: (Int, SearchResult) -> Void
 
     var body: some View {
         ScrollViewReader { proxy in
@@ -27,7 +27,7 @@ struct FileSearchView: View {
                         )
                         .onHover { hoveredIndex = $0 ? index : nil }
                         .onTapGesture {
-                            onTapRow(result)
+                            onTapRow(index, result)
                         }
                         .id("file-\(index)-\(result.id)")
                     }

@@ -76,6 +76,7 @@ func InitEngine() {
 			log.Printf("Bridge: Failed to start manager: %v", err)
 			return
 		}
+		go manager.Watch()
 
 		statsManager = ps.NewStatsManager()
 		log.Println("Bridge: Go Engine initialized successfully")
