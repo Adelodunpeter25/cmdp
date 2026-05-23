@@ -72,9 +72,9 @@ class AppDelegate: NSObject, NSApplicationDelegate, SPUUpdaterDelegate {
 
     func feedURLString(for updater: SPUUpdater) -> String? {
         #if arch(arm64)
-        return "https://raw.githubusercontent.com/Adelodunpeter25/cmdp/main/appcast-arm64.xml"
+        return "https://github.com/Adelodunpeter25/cmdp/releases/latest/download/appcast-arm64.xml"
         #else
-        return "https://raw.githubusercontent.com/Adelodunpeter25/cmdp/main/appcast-x64.xml"
+        return "https://github.com/Adelodunpeter25/cmdp/releases/latest/download/appcast-x64.xml"
         #endif
     }
 }
