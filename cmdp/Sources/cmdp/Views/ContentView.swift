@@ -611,9 +611,9 @@ struct WebSearchRow: View {
             Image(systemName: "globe")
                 .resizable()
                 .aspectRatio(contentMode: .fit)
-                .frame(width: Theme.iconSize - 4, height: Theme.iconSize - 4)
+                .frame(width: 18, height: 18)
                 .foregroundColor(isSelected ? Theme.textSelected : .blue)
-                .padding(2)
+                .padding(4)
 
             VStack(alignment: .leading, spacing: 1) {
                 Text(query.isEmpty ? "Web Search" : "Search the Web")
@@ -660,9 +660,9 @@ struct WebSearchCard: View {
             Image(systemName: "globe")
                 .resizable()
                 .aspectRatio(contentMode: .fit)
-                .frame(width: Theme.iconSize - 6, height: Theme.iconSize - 6)
+                .frame(width: 18, height: 18)
                 .foregroundColor(isSelected ? Theme.textSelected : .blue)
-                .padding(3)
+                .padding(4)
             
             Text("Web Search")
                 .font(.system(size: 14, weight: isSelected ? .semibold : .regular))
