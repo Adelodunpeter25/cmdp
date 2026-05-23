@@ -14,6 +14,17 @@ class SearchService: ObservableObject {
     }
     
     func search(query: String) {
+        let isFileSearch = query.hasPrefix("/")
+        let currentHasFiles = results.contains { $0.Item.itemType == .file }
+        if isFileSearch != currentHasFiles {
+            self.results = []
+        }
+
+        if query == "/" {
+            self.results = []
+            return
+        }
+
         let revision = stateQueue.sync {
             searchRevision += 1
             return searchRevision

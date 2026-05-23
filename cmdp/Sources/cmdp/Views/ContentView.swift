@@ -205,6 +205,9 @@ struct ContentView: View {
 
                         if let stats = processService.systemStats {
                             ProcessCard(stats: stats)
+                                .onTapGesture {
+                                    openActivityMonitor()
+                                }
                                 .transition(.opacity)
                         } else {
                             HStack {
@@ -484,6 +487,15 @@ struct ContentView: View {
         } else if let command = Command.allCommands.first(where: { $0.id == commandId }) {
             CommandService.shared.execute(command)
         }
+    }
+
+    private func openActivityMonitor() {
+        if let url = NSWorkspace.shared.urlForApplication(withBundleIdentifier: "com.apple.ActivityMonitor") {
+            NSWorkspace.shared.open(url)
+        } else {
+            NSWorkspace.shared.open(URL(fileURLWithPath: "/System/Applications/Utilities/Activity Monitor.app"))
+        }
+        NSApp.hide(nil)
     }
 }
 

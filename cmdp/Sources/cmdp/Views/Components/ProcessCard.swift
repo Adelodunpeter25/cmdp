@@ -2,6 +2,7 @@ import SwiftUI
 
 struct ProcessCard: View {
     let stats: SystemStats
+    @State private var isHovered = false
 
     var body: some View {
         HStack(alignment: .top, spacing: 24) {
@@ -59,10 +60,14 @@ struct ProcessCard: View {
         .padding(.vertical, 12)
         .background(
             RoundedRectangle(cornerRadius: Theme.rowCornerRadius)
-                .fill(Theme.hoverBackground.opacity(0.3))
+                .fill(isHovered ? Theme.hoverBackground.opacity(0.6) : Theme.hoverBackground.opacity(0.3))
         )
         .padding(.horizontal, 12)
         .padding(.vertical, 8)
+        .onHover { hovering in
+            isHovered = hovering
+        }
+        .contentShape(Rectangle())
     }
 
     private func metricHeader(title: String, value: String, icon: String) -> some View {
