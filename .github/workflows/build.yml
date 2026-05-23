@@ -195,10 +195,7 @@ jobs:
               fi
 
               if [[ -f appcast-x64.xml && -f appcast-arm64.xml ]]; then
-                git add appcast-x64.xml appcast-arm64.xml
-                git commit -m "chore: update Sparkle appcasts for v1" || true
-                git push origin main || true
-                gh release upload v1 appcast-x64.xml appcast-arm64.xml --clobber
+                gh release upload "${RELEASE_TAG}" appcast-x64.xml appcast-arm64.xml --clobber
                 echo "Sparkle appcasts updated."
               fi
             else
