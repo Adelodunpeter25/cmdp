@@ -1,5 +1,6 @@
 import SwiftUI
 import AppKit
+import Sparkle
 
 class SpotlightWindow: NSWindow {
     override var canBecomeKey: Bool {
@@ -18,8 +19,12 @@ class SpotlightWindow: NSWindow {
 class AppDelegate: NSObject, NSApplicationDelegate {
     var window: SpotlightWindow?
     var hotKeyService: HotKeyService?
+    var updaterController: SPUStandardUpdaterController?
 
     func applicationDidFinishLaunching(_ notification: Notification) {
+        // Initialize Sparkle
+        updaterController = SPUStandardUpdaterController(startingUpdater: true, updaterDelegate: nil, userDriverDelegate: nil)
+
         // Create the spotlight-like window
         let contentView = ContentView()
 

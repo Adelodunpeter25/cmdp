@@ -17,7 +17,8 @@ let package = Package(
         .executable(name: "cmdp", targets: ["cmdp"])
     ],
     dependencies: [
-        .package(url: "https://github.com/soffes/HotKey", from: "0.1.0")
+        .package(url: "https://github.com/soffes/HotKey", from: "0.1.0"),
+        .package(url: "https://github.com/sparkle-project/Sparkle", from: "2.6.4")
     ],
     targets: [
         .target(
@@ -30,7 +31,8 @@ let package = Package(
             name: "cmdp",
             dependencies: [
                 "CLibSearch",
-                .product(name: "HotKey", package: "HotKey")
+                .product(name: "HotKey", package: "HotKey"),
+                .product(name: "Sparkle", package: "Sparkle")
             ],
             linkerSettings: [
                 .unsafeFlags(["-L\(daemonBuildDirectory)", "-lsearch"])

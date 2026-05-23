@@ -78,6 +78,12 @@ cat <<PLIST > "${APP_NAME}.app/Contents/Info.plist"
     <string>APPL</string>
     <key>CFBundleShortVersionString</key>
     <string>1.0</string>
+    <key>CFBundleVersion</key>
+    <string>1</string>
+    <key>SUFeedURL</key>
+    <string>https://raw.githubusercontent.com/Adelodunpeter25/cmdp/main/appcast.xml</string>
+    <key>SUPublicEDKey</key>
+    <string>PLACEHOLDER_EDDSA_PUBLIC_KEY</string>
     <key>LSMinimumSystemVersion</key>
     <string>13.0</string>
     <key>LSUIElement</key>
