@@ -6,12 +6,13 @@ import (
 	"log"
 	"os"
 	"path/filepath"
-	"strings"
 	"sync"
+	"syscall"
 
 	"github.com/Adelodunpeter25/cmdp/daemon/internal/indexer"
 	"github.com/Adelodunpeter25/cmdp/daemon/internal/ps"
 	"github.com/Adelodunpeter25/cmdp/daemon/internal/search"
+	"github.com/Adelodunpeter25/cmdp/daemon/internal/utils"
 )
 
 var (
@@ -20,10 +21,23 @@ var (
 	once         sync.Once
 )
 
+func increaseFdLimit() {
+	var rLimit syscall.Rlimit
+	if err := syscall.Getrlimit(syscall.RLIMIT_NOFILE, &rLimit); err == nil {
+		rLimit.Cur = rLimit.Max
+		if err := syscall.Setrlimit(syscall.RLIMIT_NOFILE, &rLimit); err != nil {
+			log.Printf("Bridge: Failed to set FD limit: %v", err)
+		} else {
+			log.Printf("Bridge: Increased FD limit to %d", rLimit.Cur)
+		}
+	}
+}
+
 // Initialize the Go engine. This will be called from Swift.
 //export InitEngine
 func InitEngine() {
 	once.Do(func() {
+		increaseFdLimit()
 		homeDir, err := os.UserHomeDir()
 		if err != nil {
 			log.Printf("Bridge: Failed to get home dir: %v", err)
@@ -59,8 +73,8 @@ func InitEngine() {
 		entries, err := os.ReadDir(homeDir)
 		if err == nil {
 			for _, entry := range entries {
-				if entry.IsDir() && !strings.HasPrefix(entry.Name(), ".") {
-					path := filepath.Join(homeDir, entry.Name())
+				path := filepath.Join(homeDir, entry.Name())
+				if entry.IsDir() && !utils.ShouldIgnore(path, homeDir) {
 					// Skip directories already added or typically redundant
 					name := entry.Name()
 					if name == "Library" || added[path] {

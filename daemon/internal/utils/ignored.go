@@ -62,10 +62,6 @@ func NewIgnoreChecker() *IgnoreChecker {
 
 // ShouldIgnore checks if a path matches any of the ignore patterns.
 func (c *IgnoreChecker) ShouldIgnore(path string, root string) bool {
-	if path == root {
-		return false
-	}
-
 	name := filepath.Base(path)
 
 	// Check exact directory/file matches

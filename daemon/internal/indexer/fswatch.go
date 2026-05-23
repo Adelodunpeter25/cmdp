@@ -134,7 +134,9 @@ func (m *Manager) Watch() {
 				}
 				if event.Op&fsnotify.Create == fsnotify.Create {
 					if info, err := os.Stat(event.Name); err == nil && info.IsDir() {
-						addRecursive(event.Name)
+						if !utils.ShouldIgnore(event.Name, "") {
+							addRecursive(event.Name)
+						}
 					}
 				}
 				if event.Op&(fsnotify.Create|fsnotify.Write|fsnotify.Remove|fsnotify.Rename) != 0 {
