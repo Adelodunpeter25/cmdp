@@ -6,6 +6,7 @@ const (
 	TypeApp     ItemType = "app"
 	TypeFolder  ItemType = "folder"
 	TypeCommand ItemType = "command"
+	TypeFile    ItemType = "file"
 )
 
 type IndexItem struct {

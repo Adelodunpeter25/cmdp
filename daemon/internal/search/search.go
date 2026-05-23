@@ -161,3 +161,56 @@ func Items(query string, items []indexer.IndexItem) []Result {
 
 	return capped
 }
+
+// Files matches a query against a slice of file IndexItems and returns ranked results.
+func Files(query string, items []indexer.IndexItem) []Result {
+	if len(items) == 0 {
+		return []Result{}
+	}
+
+	// Empty query: return everything sorted alphabetically.
+	if query == "" {
+		results := make([]Result, len(items))
+		for i, item := range items {
+			results[i] = Result{Item: item, Score: 0}
+		}
+		sort.SliceStable(results, func(i, j int) bool {
+			return strings.ToLower(results[i].Item.Name) < strings.ToLower(results[j].Item.Name)
+		})
+		return results
+	}
+
+	names := make([]string, len(items))
+	for i, item := range items {
+		names[i] = item.Name
+	}
+
+	// Fuzzy find candidates
+	matches := fuzzy.Find(query, names)
+
+	results := make([]Result, len(matches))
+	for i, m := range matches {
+		item := items[m.Index]
+		results[i] = Result{
+			Item:  item,
+			Score: scoreItem(query, item, m.Score),
+		}
+	}
+
+	// Sort by score desc, then name asc
+	sort.SliceStable(results, func(i, j int) bool {
+		if results[i].Score != results[j].Score {
+			return results[i].Score > results[j].Score
+		}
+		return strings.ToLower(results[i].Item.Name) < strings.ToLower(results[j].Item.Name)
+	})
+
+	// Cap at 10 results for files
+	const maxFileResults = 10
+	if len(results) > maxFileResults {
+		results = results[:maxFileResults]
+	}
+
+	return results
+}
+

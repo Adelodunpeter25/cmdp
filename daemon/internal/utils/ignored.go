@@ -5,7 +5,7 @@ import (
 	"strings"
 )
 
-var ignoredDirectories = map[string]bool{
+var defaultDirectories = map[string]bool{
 	".git":             true,
 	".svn":             true,
 	".hg":              true,
@@ -27,7 +27,7 @@ var ignoredDirectories = map[string]bool{
 	".Trash":           true,
 }
 
-var ignoredFiles = map[string]bool{
+var defaultFiles = map[string]bool{
 	".DS_Store":      true,
 	".localized":     true,
 	"thumbs.db":      true,
@@ -37,17 +37,31 @@ var ignoredFiles = map[string]bool{
 	".gitmodules":    true,
 }
 
-var ignoredExtensions = map[string]bool{
+var defaultExtensions = map[string]bool{
 	".tmp":  true,
 	".log":  true,
 	".swp":  true,
 	".lock": true,
 }
 
-// ShouldIgnore returns true if the given path should be ignored.
-// It will NOT ignore the path if it matches the root directory being scanned.
-func ShouldIgnore(path string, root string) bool {
-	// Never ignore the root itself
+// IgnoreChecker allows custom and reusable file/directory ignoring filters.
+type IgnoreChecker struct {
+	Directories map[string]bool
+	Files       map[string]bool
+	Extensions  map[string]bool
+}
+
+// NewIgnoreChecker initializes a standard IgnoreChecker with default ignore rules.
+func NewIgnoreChecker() *IgnoreChecker {
+	return &IgnoreChecker{
+		Directories: defaultDirectories,
+		Files:       defaultFiles,
+		Extensions:  defaultExtensions,
+	}
+}
+
+// ShouldIgnore checks if a path matches any of the ignore patterns.
+func (c *IgnoreChecker) ShouldIgnore(path string, root string) bool {
 	if path == root {
 		return false
 	}
@@ -55,7 +69,7 @@ func ShouldIgnore(path string, root string) bool {
 	name := filepath.Base(path)
 
 	// Check exact directory/file matches
-	if ignoredDirectories[name] || ignoredFiles[name] {
+	if c.Directories[name] || c.Files[name] {
 		return true
 	}
 
@@ -66,9 +80,18 @@ func ShouldIgnore(path string, root string) bool {
 
 	// Check extensions
 	ext := filepath.Ext(name)
-	if ignoredExtensions[ext] {
+	if c.Extensions[ext] {
 		return true
 	}
 
 	return false
 }
+
+var defaultChecker = NewIgnoreChecker()
+
+// ShouldIgnore returns true if the given path should be ignored under default rules.
+// It will NOT ignore the path if it matches the root directory being scanned.
+func ShouldIgnore(path string, root string) bool {
+	return defaultChecker.ShouldIgnore(path, root)
+}
+

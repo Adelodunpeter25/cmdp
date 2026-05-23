@@ -110,6 +110,31 @@ func SearchApps(query *C.char) *C.char {
 	return C.CString(string(jsonData))
 }
 
+// Search for files. Returns a JSON string of results.
+// Swift is responsible for freeing the returned C string.
+//export SearchFiles
+func SearchFiles(query *C.char) *C.char {
+	if manager == nil {
+		return C.CString("[]")
+	}
+
+	goQuery := C.GoString(query)
+	candidates, err := manager.SearchFiles(goQuery)
+	if err != nil {
+		log.Printf("Bridge: SearchFiles error: %v", err)
+		return C.CString("[]")
+	}
+
+	results := search.Files(goQuery, candidates)
+
+	jsonData, err := json.Marshal(results)
+	if err != nil {
+		return C.CString("[]")
+	}
+
+	return C.CString(string(jsonData))
+}
+
 // Reset the index by clearing the database.
 //export ResetIndex
 func ResetIndex() {

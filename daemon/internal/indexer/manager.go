@@ -7,18 +7,20 @@ import (
 )
 
 type Manager struct {
-	db      *DB
-	items   []IndexItem
-	mu      sync.RWMutex
-	dirs    []string
-	crawler *Crawler
+	db          *DB
+	items       []IndexItem
+	mu          sync.RWMutex
+	dirs        []string
+	crawler     *Crawler
+	fileCrawler *FileCrawler
 }
 
 func NewManager(db *DB, dirs []string) *Manager {
 	return &Manager{
-		db:      db,
-		dirs:    dirs,
-		crawler: NewCrawler(5), // Set a reasonable max depth
+		db:          db,
+		dirs:        dirs,
+		crawler:     NewCrawler(5), // Set a reasonable max depth for apps/folders
+		fileCrawler: NewFileCrawler(db, 12), // Deeper max depth for user documents/projects
 	}
 }
 
@@ -34,6 +36,7 @@ func (m *Manager) Start() error {
 
 	// 2. Perform a fresh scan in the background
 	go m.refresh()
+	go m.refreshFiles()
 
 	return nil
 }
@@ -61,10 +64,28 @@ func (m *Manager) refresh() {
 	log.Printf("Manager: Index refreshed in %v. Found %d items.", time.Since(start), len(allItems))
 }
 
+func (m *Manager) refreshFiles() {
+	log.Println("Manager: Refreshing files index...")
+	start := time.Now()
+
+	err := m.fileCrawler.Scan(m.dirs)
+	if err != nil {
+		log.Printf("Manager: Files scan error: %v", err)
+		return
+	}
+
+	log.Printf("Manager: Files index refreshed in %v.", time.Since(start))
+}
+
 func (m *Manager) GetItems() []IndexItem {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
 	return m.items
+}
+
+// SearchFiles queries candidate files from DB matching the search pattern.
+func (m *Manager) SearchFiles(query string) ([]IndexItem, error) {
+	return m.db.SearchFiles(query)
 }
 
 // Reset clears all items and the database, then triggers a fresh scan.
@@ -80,4 +101,6 @@ func (m *Manager) Reset() {
 
 	// Trigger a fresh scan
 	go m.refresh()
+	go m.refreshFiles()
 }
+

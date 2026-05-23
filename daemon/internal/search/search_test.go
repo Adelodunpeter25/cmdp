@@ -175,3 +175,46 @@ func TestCommandMatching(t *testing.T) {
 	}
 }
 
+func TestSearchFiles(t *testing.T) {
+	items := []indexer.IndexItem{
+		{Name: "index_plan.md", Path: "/docs/index_plan.md", Type: indexer.TypeFile},
+		{Name: "index.go", Path: "/src/index.go", Type: indexer.TypeFile},
+		{Name: "readme.md", Path: "/readme.md", Type: indexer.TypeFile},
+		{Name: "some_file.txt", Path: "/some_file.txt", Type: indexer.TypeFile},
+	}
+
+	// 1. Exact match and prefix match checking
+	results := Files("index.go", items)
+	if len(results) == 0 {
+		t.Fatalf("expected some results, got 0")
+	}
+	if results[0].Item.Name != "index.go" {
+		t.Errorf("expected exact match 'index.go' first, got %q", results[0].Item.Name)
+	}
+
+	// 2. Fuzzy prefix query
+	results = Files("index", items)
+	if len(results) != 2 {
+		t.Errorf("expected 2 results starting with index, got %d", len(results))
+	}
+	// "index.go" should rank before "index_plan.md" (alphabetical tie-break if scores are equal, or exact prefix sorting)
+	if results[0].Item.Name != "index.go" {
+		t.Errorf("expected 'index.go' first, got %q", results[0].Item.Name)
+	}
+
+	// 3. Capping check
+	manyItems := make([]indexer.IndexItem, 15)
+	for i := 0; i < 15; i++ {
+		manyItems[i] = indexer.IndexItem{
+			Name: "test_file.txt",
+			Path: "/test_file.txt",
+			Type: indexer.TypeFile,
+		}
+	}
+	cappedResults := Files("test_file", manyItems)
+	if len(cappedResults) != 10 {
+		t.Errorf("expected exactly 10 results due to file capping, got %d", len(cappedResults))
+	}
+}
+
+
