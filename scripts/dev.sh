@@ -24,9 +24,19 @@ echo "📦 Creating Dev Bundle..."
 rm -rf "${BUNDLE_PATH}"
 mkdir -p "${BUNDLE_PATH}/Contents/MacOS"
 mkdir -p "${BUNDLE_PATH}/Contents/Resources"
+mkdir -p "${BUNDLE_PATH}/Contents/Frameworks"
 
 # Copy the binary
 cp .build/debug/cmdp "${BUNDLE_PATH}/Contents/MacOS/"
+
+# Copy Sparkle framework
+SPARKLE_FRAMEWORK="$(find .build -name "Sparkle.framework" -type d | head -n 1)"
+if [[ -n "$SPARKLE_FRAMEWORK" ]]; then
+    cp -R "$SPARKLE_FRAMEWORK" "${BUNDLE_PATH}/Contents/Frameworks/"
+    echo "📦 Embedded Sparkle.framework"
+else
+    echo "⚠️  Sparkle.framework not found!"
+fi
 
 # Generate Dev Info.plist
 cat <<PLIST > "${BUNDLE_PATH}/Contents/Info.plist"

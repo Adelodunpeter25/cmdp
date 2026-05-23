@@ -104,11 +104,44 @@ jobs:
           # Give GitHub API a moment to process the deletion
           sleep 5
 
-          # 3. Create new release with build assets
-          # We use --target to specify the commit, and 'gh' will handle tag creation.
-          echo "Creating new release 'v1'..."
+      - name: Create new release 'v1'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SPARKLE_PRIVATE_KEY: ${{ secrets.SPARKLE_PRIVATE_KEY }}
+        run: |
           gh release create v1 cmdp-x64.dmg cmdp-arm64.dmg \
             --target ${{ github.sha }} \
             --title "Release v1" \
             --notes "Automated build of v1 from commit ${{ github.sha }} on $(date -u +'%Y-%m-%d %H:%M:%S') UTC"
+
+          # Generate and sign Sparkle appcast if private key is available
+          if [[ -n "$SPARKLE_PRIVATE_KEY" ]]; then
+            echo "Generating Sparkle appcast..."
+            
+            # Find Sparkle's generate_appcast tool
+            # (In CI, we need to locate it within the build artifacts)
+            GENERATE_APPCAST=$(find cmdp/.build -name "generate_appcast" -type f | head -n 1)
+            
+            if [[ -n "$GENERATE_APPCAST" ]]; then
+               # Move DMGs to a specific folder for appcast generation
+               mkdir -p sparkle_assets
+               cp cmdp-x64.dmg cmdp-arm64.dmg sparkle_assets/
+               
+               $GENERATE_APPCAST sparkle_assets/
+               
+               # The tool generates appcast.xml in the sparkle_assets folder
+               mv sparkle_assets/appcast.xml .
+               
+               # Commit appcast.xml back to the repo
+               git add appcast.xml
+               git commit -m "chore: update Sparkle appcast for v1" || true
+               git push origin main || true
+               
+               echo "Sparkle appcast updated and pushed."
+            else
+               echo "⚠️  generate_appcast tool not found!"
+            fi
+          else
+            echo "⏭️  Skipping appcast generation (SPARKLE_PRIVATE_KEY missing)."
+          fi
 

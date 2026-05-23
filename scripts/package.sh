@@ -51,6 +51,7 @@ echo "📦 Assembling .app bundle..."
 rm -rf "${APP_NAME}.app"
 mkdir -p "${APP_NAME}.app/Contents/MacOS"
 mkdir -p "${APP_NAME}.app/Contents/Resources"
+mkdir -p "${APP_NAME}.app/Contents/Frameworks"
 
 # 4. Copy binaries
 BINARY_PATH=".build/${TARGET_ARCH}-apple-macosx/release/cmdp"
@@ -59,6 +60,15 @@ if [[ ! -f "$BINARY_PATH" ]]; then
     BINARY_PATH=".build/release/cmdp"
 fi
 cp "$BINARY_PATH" "${APP_NAME}.app/Contents/MacOS/"
+
+# Copy Sparkle framework
+SPARKLE_FRAMEWORK="$(find .build -name "Sparkle.framework" -type d | head -n 1)"
+if [[ -n "$SPARKLE_FRAMEWORK" ]]; then
+    cp -R "$SPARKLE_FRAMEWORK" "${APP_NAME}.app/Contents/Frameworks/"
+    echo "📦 Embedded Sparkle.framework"
+else
+    echo "⚠️  Sparkle.framework not found!"
+fi
 
 # 5. Generate Info.plist
 cat <<PLIST > "${APP_NAME}.app/Contents/Info.plist"
