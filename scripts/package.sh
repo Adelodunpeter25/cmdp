@@ -4,6 +4,8 @@ set -e
 # Configuration
 APP_NAME="cmdp"
 BUNDLE_ID="com.Adelodunpeter25.cmdp"
+APP_VERSION="${CMDP_VERSION:-1.0.1}"
+BUILD_NUMBER="${CMDP_BUILD_NUMBER:-1}"
 
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 PROJECT_ROOT="$( cd "$SCRIPT_DIR/.." && pwd )"
@@ -88,9 +90,9 @@ cat <<PLIST > "${APP_NAME}.app/Contents/Info.plist"
     <key>CFBundlePackageType</key>
     <string>APPL</string>
     <key>CFBundleShortVersionString</key>
-    <string>1.0</string>
+    <string>${APP_VERSION}</string>
     <key>CFBundleVersion</key>
-    <string>1</string>
+    <string>${BUILD_NUMBER}</string>
     <key>SUFeedURL</key>
     <string>https://raw.githubusercontent.com/Adelodunpeter25/cmdp/main/appcast-x64.xml</string>
     <key>SUPublicEDKey</key>

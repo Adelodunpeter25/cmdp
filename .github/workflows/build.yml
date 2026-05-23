@@ -43,6 +43,30 @@ jobs:
           echo "Go Version:"
           go version
 
+      - name: Compute App Version
+        run: |
+          latest_tag=$(git tag --sort=-v:refname | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' | head -n 1 || true)
+          if [[ -z "$latest_tag" ]]; then
+            base_major=1
+            base_minor=0
+            base_patch=0
+          else
+            version="${latest_tag#v}"
+            IFS='.' read -r base_major base_minor base_patch <<< "$version"
+          fi
+
+          if [[ "$base_patch" -ge 9 ]]; then
+            base_minor=$((base_minor + 1))
+            base_patch=0
+          else
+            base_patch=$((base_patch + 1))
+          fi
+
+          next_version="${base_major}.${base_minor}.${base_patch}"
+          echo "CMDP_VERSION=$next_version" >> "$GITHUB_ENV"
+          echo "CMDP_BUILD_NUMBER=$((base_major * 10000 + base_minor * 100 + base_patch))" >> "$GITHUB_ENV"
+          echo "Next version: $next_version"
+
       - name: Make package script executable
         run: chmod +x scripts/package.sh
 
@@ -92,6 +116,30 @@ jobs:
           cd cmdp
           swift package resolve
 
+      - name: Compute Release Version
+        run: |
+          latest_tag=$(git tag --sort=-v:refname | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' | head -n 1 || true)
+          if [[ -z "$latest_tag" ]]; then
+            base_major=1
+            base_minor=0
+            base_patch=0
+          else
+            version="${latest_tag#v}"
+            IFS='.' read -r base_major base_minor base_patch <<< "$version"
+          fi
+
+          if [[ "$base_patch" -ge 9 ]]; then
+            base_minor=$((base_minor + 1))
+            base_patch=0
+          else
+            base_patch=$((base_patch + 1))
+          fi
+
+          next_version="${base_major}.${base_minor}.${base_patch}"
+          echo "CMDP_VERSION=$next_version" >> "$GITHUB_ENV"
+          echo "RELEASE_TAG=v$next_version" >> "$GITHUB_ENV"
+          echo "Next release tag: v$next_version"
+
       - name: Recreate Tag and Release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -100,13 +148,13 @@ jobs:
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
 
           # 1. Delete release and tag on remote if they exist
-          echo "Deleting remote release and tag 'v1'..."
-          gh release delete v1 --yes --cleanup-tag || true
+          echo "Deleting remote release and tag '${RELEASE_TAG}'..."
+          gh release delete "${RELEASE_TAG}" --yes --cleanup-tag || true
 
           # 2. Delete tag locally and on remote if it exists
-          echo "Deleting tag 'v1'..."
-          git tag -d v1 || true
-          git push origin :refs/tags/v1 || true
+          echo "Deleting tag '${RELEASE_TAG}'..."
+          git tag -d "${RELEASE_TAG}" || true
+          git push origin ":refs/tags/${RELEASE_TAG}" || true
 
           # Give GitHub API a moment to process the deletion
           sleep 5
@@ -116,10 +164,10 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SPARKLE_PRIVATE_KEY: ${{ secrets.SPARKLE_PRIVATE_KEY }}
         run: |
-          gh release create v1 cmdp-x64.dmg cmdp-arm64.dmg \
+          gh release create "${RELEASE_TAG}" cmdp-x64.dmg cmdp-arm64.dmg \
             --target ${{ github.sha }} \
-            --title "Release v1" \
-            --notes "Automated build of v1 from commit ${{ github.sha }} on $(date -u +'%Y-%m-%d %H:%M:%S') UTC"
+            --title "Release ${RELEASE_TAG}" \
+            --notes "Automated build of ${RELEASE_TAG} from commit ${{ github.sha }} on $(date -u +'%Y-%m-%d %H:%M:%S') UTC"
 
           # Generate and sign Sparkle appcast if private key is available
           if [[ -n "$SPARKLE_PRIVATE_KEY" ]]; then
