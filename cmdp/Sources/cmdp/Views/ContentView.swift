@@ -31,8 +31,6 @@ struct ContentView: View {
     @StateObject private var searchService = SearchService()
     @StateObject private var processService = ProcessService()
     @State private var searchText: String = ""
-    @State private var previousSearchText: String = ""
-    @State private var backspaceOnSlashPressed: Bool = false
     @State private var selectedIndex: Int = 0
     @State private var hoveredIndex: Int? = nil
     @FocusState private var isSearchFieldFocused: Bool
@@ -89,22 +87,6 @@ struct ContentView: View {
                     .focused($isSearchFieldFocused)
                     .onChange(of: searchText) { newValue in
                         searchDebounceItem?.cancel()
-
-                        // Double backspace to remove "/" logic
-                        if previousSearchText == "/" && newValue == "" {
-                            if !backspaceOnSlashPressed {
-                                backspaceOnSlashPressed = true
-                                searchText = "/"
-                                previousSearchText = "/"
-                                return
-                            }
-                        }
-
-                        if newValue != "/" {
-                            backspaceOnSlashPressed = false
-                        }
-
-                        previousSearchText = newValue
 
                         if newValue.isEmpty {
                             processService.startPolling()
