@@ -133,62 +133,24 @@ struct ContentView: View {
                     WebView(url: webURL)
                         .frame(height: 400)
                         .transition(.opacity)
-                } else {
+                } else if !searchText.isEmpty {
                     Divider()
-                    if searchText.isEmpty {
-                        // Thin Web Search Info Card
-                        VStack(spacing: 8) {
-                            HStack(spacing: 12) {
-                                Image(systemName: "globe")
-                                    .font(.system(size: 16, weight: .bold))
-                                    .foregroundColor(.blue)
-                                Text("Web Search Mode")
-                                    .font(.system(size: 13, weight: .bold))
-                                    .foregroundColor(Theme.textPrimary)
-                                Spacer()
-                                Text("Esc to Go Back")
-                                    .font(.system(size: 10, weight: .medium))
-                                    .foregroundColor(Theme.textSecondary.opacity(0.8))
-                                    .padding(.horizontal, 6)
-                                    .padding(.vertical, 2)
-                                    .background(
-                                        RoundedRectangle(cornerRadius: 4)
-                                            .fill(Theme.hoverBackground)
-                                    )
-                            }
-                            Text("Type a query and press Enter to search Google.")
-                                .font(.system(size: 11))
-                                .foregroundColor(Theme.textSecondary)
-                                .frame(maxWidth: .infinity, alignment: .leading)
-                        }
-                        .padding(.horizontal, 16)
-                        .padding(.vertical, 12)
-                        .background(
-                            RoundedRectangle(cornerRadius: Theme.rowCornerRadius)
-                                .fill(Theme.hoverBackground.opacity(0.3))
+                    VStack(spacing: 0) {
+                        WebSearchRow(
+                            query: searchText,
+                            isSelected: selectedIndex == 0,
+                            isHovered: hoveredIndex == 0
                         )
-                        .padding(.horizontal, 12)
-                        .padding(.vertical, 8)
-                        .transition(.opacity)
-                    } else {
-                        // Thinner Web Search Row Card
-                        VStack(spacing: 0) {
-                            WebSearchRow(
-                                query: searchText,
-                                isSelected: selectedIndex == 0,
-                                isHovered: hoveredIndex == 0
-                            )
-                            .onHover { hoveredIndex = $0 ? 0 : nil }
-                            .onTapGesture {
-                                if let url = WebService.shared.searchURL(for: searchText) {
-                                    activeWebURL = url
-                                }
+                        .onHover { hoveredIndex = $0 ? 0 : nil }
+                        .onTapGesture {
+                            if let url = WebService.shared.searchURL(for: searchText) {
+                                activeWebURL = url
                             }
                         }
-                        .padding(.horizontal, 8)
-                        .padding(.vertical, 8)
-                        .transition(.opacity)
                     }
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 8)
+                    .transition(.opacity)
                 }
             } else {
                 if !searchText.isEmpty {
@@ -238,7 +200,7 @@ struct ContentView: View {
                             searchText = ""
                             selectedIndex = 0
                         }
-                        .padding(.horizontal, 12)
+                        .padding(.horizontal, 8)
                         .padding(.top, 8)
 
                         if let stats = processService.systemStats {
@@ -694,42 +656,25 @@ struct WebSearchCard: View {
     let isHovered: Bool
     
     var body: some View {
-        HStack(spacing: 16) {
-            ZStack {
-                Circle()
-                    .fill(isSelected ? Color.white.opacity(0.2) : Color.blue.opacity(0.15))
-                    .frame(width: 36, height: 36)
-                
-                Image(systemName: "globe")
-                    .font(.system(size: 18, weight: .medium))
-                    .foregroundColor(isSelected ? .white : .blue)
-            }
+        HStack(spacing: 12) {
+            Image(systemName: "globe")
+                .resizable()
+                .aspectRatio(contentMode: .fit)
+                .frame(width: Theme.iconSize - 6, height: Theme.iconSize - 6)
+                .foregroundColor(isSelected ? Theme.textSelected : .blue)
+                .padding(3)
             
-            VStack(alignment: .leading, spacing: 2) {
-                Text("Web Search")
-                    .font(.system(size: 14, weight: .bold))
-                    .foregroundColor(isSelected ? .white : Theme.textPrimary)
-                
-                Text("Search Google directly from cmdp")
-                    .font(.system(size: 11))
-                    .foregroundColor(isSelected ? Color.white.opacity(0.7) : Theme.textSecondary)
-            }
+            Text("Web Search")
+                .font(.system(size: 14, weight: isSelected ? .semibold : .regular))
+                .foregroundColor(isSelected ? Theme.textSelected : Theme.textPrimary)
             
             Spacer()
-            
-            Image(systemName: "chevron.right")
-                .font(.system(size: 12, weight: .bold))
-                .foregroundColor(isSelected ? Color.white.opacity(0.8) : Theme.textSecondary.opacity(0.5))
         }
-        .padding(.horizontal, 16)
-        .padding(.vertical, 12)
+        .padding(.vertical, Theme.rowPaddingVertical)
+        .padding(.horizontal, Theme.rowPaddingHorizontal)
         .background(
             RoundedRectangle(cornerRadius: Theme.rowCornerRadius)
-                .fill(isSelected ? Theme.selectionBackground : Theme.hoverBackground.opacity(0.3))
-        )
-        .overlay(
-            RoundedRectangle(cornerRadius: Theme.rowCornerRadius)
-                .stroke(isSelected ? Color.accentColor : Color.clear, lineWidth: 1)
+                .fill(isSelected ? Theme.selectionBackground : (isHovered ? Theme.hoverBackground : Color.clear))
         )
         .contentShape(Rectangle())
     }
