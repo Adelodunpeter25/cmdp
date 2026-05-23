@@ -96,22 +96,19 @@ jobs:
           echo "Deleting remote release and tag 'v1'..."
           gh release delete v1 --yes --cleanup-tag || true
 
-          # 2. Delete tag locally if it exists
-          echo "Deleting local tag 'v1'..."
+          # 2. Delete tag locally and on remote if it exists
+          echo "Deleting tag 'v1'..."
           git tag -d v1 || true
           git push origin :refs/tags/v1 || true
 
           # Give GitHub API a moment to process the deletion
-          sleep 3
+          sleep 5
 
-          # 3. Create tag locally and push to remote
-          echo "Creating and pushing new tag 'v1'..."
-          git tag v1
-          git push origin v1
-
-          # 4. Create new release with build assets
+          # 3. Create new release with build assets
+          # We use --target to specify the commit, and 'gh' will handle tag creation.
           echo "Creating new release 'v1'..."
           gh release create v1 cmdp-x64.dmg cmdp-arm64.dmg \
+            --target ${{ github.sha }} \
             --title "Release v1" \
             --notes "Automated build of v1 from commit ${{ github.sha }} on $(date -u +'%Y-%m-%d %H:%M:%S') UTC"
 
