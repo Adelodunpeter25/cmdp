@@ -36,10 +36,7 @@ else
     CGO_ENABLED=1 GOOS=darwin GOARCH=arm64 CC="clang -arch arm64 -isysroot $SDK_PATH" go build -buildmode=c-archive -o build/libsearch.a ./pkg/bridge
 fi
 
-# Copy Go binary to Swift CLibSearch directory
-mkdir -p "$PROJECT_ROOT/cmdp/Sources/CLibSearch"
-cp build/libsearch.a "$PROJECT_ROOT/cmdp/Sources/CLibSearch/libsearch.a"
-echo "Copied Go search library to Swift package."
+echo "Go search library built at daemon/build/libsearch.a."
 
 # 2. Build Swift App (Release)
 echo "Building Swift App (cmdp)..."
