@@ -34,13 +34,10 @@ let package = Package(
                 .product(name: "HotKey", package: "HotKey"),
                 .product(name: "Sparkle", package: "Sparkle")
             ],
+            path: "Sources/cmdp",
             linkerSettings: [
                 .unsafeFlags(["-L\(daemonBuildDirectory)", "-lsearch"])
             ]
-        ),
-        .testTarget(
-            name: "cmdpTests",
-            dependencies: ["cmdp"]
         ),
     ]
 )
