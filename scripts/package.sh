@@ -61,6 +61,10 @@ if [[ ! -f "$BINARY_PATH" ]]; then
 fi
 cp "$BINARY_PATH" "${APP_NAME}.app/Contents/MacOS/"
 
+# Add RPATH to find Sparkle.framework inside Contents/Frameworks
+install_name_tool -add_rpath "@loader_path/../Frameworks" "${APP_NAME}.app/Contents/MacOS/cmdp"
+
+
 # Copy Sparkle framework
 SPARKLE_FRAMEWORK="$(find .build -name "Sparkle.framework" -type d | head -n 1)"
 if [[ -n "$SPARKLE_FRAMEWORK" ]]; then

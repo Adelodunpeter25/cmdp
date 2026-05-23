@@ -29,6 +29,10 @@ mkdir -p "${BUNDLE_PATH}/Contents/Frameworks"
 # Copy the binary
 cp .build/debug/cmdp "${BUNDLE_PATH}/Contents/MacOS/"
 
+# Add RPATH to find Sparkle.framework inside Contents/Frameworks
+install_name_tool -add_rpath "@loader_path/../Frameworks" "${BUNDLE_PATH}/Contents/MacOS/cmdp"
+
+
 # Copy Sparkle framework
 SPARKLE_FRAMEWORK="$(find .build -name "Sparkle.framework" -type d | head -n 1)"
 if [[ -n "$SPARKLE_FRAMEWORK" ]]; then
