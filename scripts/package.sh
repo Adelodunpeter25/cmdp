@@ -92,7 +92,7 @@ cat <<PLIST > "${APP_NAME}.app/Contents/Info.plist"
     <key>CFBundleVersion</key>
     <string>1</string>
     <key>SUFeedURL</key>
-    <string>https://raw.githubusercontent.com/Adelodunpeter25/cmdp/main/appcast.xml</string>
+    <string>https://raw.githubusercontent.com/Adelodunpeter25/cmdp/main/appcast-x64.xml</string>
     <key>SUPublicEDKey</key>
     <string>APWKwPLf5U6sLRsYxxuUCrhCYVwtEl4ihDl1XJUNylI=</string>
     <key>SUScheduledCheckInterval</key>

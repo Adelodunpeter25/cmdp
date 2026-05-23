@@ -124,39 +124,38 @@ jobs:
           # Generate and sign Sparkle appcast if private key is available
           if [[ -n "$SPARKLE_PRIVATE_KEY" ]]; then
             echo "Generating Sparkle appcast..."
-            
+
             # Find Sparkle's generate_appcast tool
             # (In CI, we need to locate it within the build artifacts)
             GENERATE_APPCAST=$(find cmdp/.build -name "generate_appcast" -type f | head -n 1)
-            
+
             if [[ -n "$GENERATE_APPCAST" ]]; then
-               # Sparkle does not allow multiple archives with the same bundle version.
-               # Generate the appcast from a single representative archive and keep
-               # both architecture-specific DMGs attached to the GitHub release.
-               mkdir -p sparkle_assets
-               cp cmdp-x64.dmg sparkle_assets/
-               
-               if "$GENERATE_APPCAST" sparkle_assets/; then
-                 # The tool generates appcast.xml in the sparkle_assets folder
-                 mv sparkle_assets/appcast.xml .
-                 cp appcast.xml "$GITHUB_WORKSPACE/appcast.xml"
-                 
-                 # Commit appcast.xml back to the repo
-                 git add appcast.xml
-                 git commit -m "chore: update Sparkle appcast for v1" || true
-                 git push origin main || true
-                 
-                 echo "Sparkle appcast updated and pushed."
-               else
-                 echo "⚠️  Sparkle appcast generation failed; continuing without updating appcast."
-               fi
+              mkdir -p sparkle_assets/x64 sparkle_assets/arm64
+              cp cmdp-x64.dmg sparkle_assets/x64/
+              cp cmdp-arm64.dmg sparkle_assets/arm64/
+
+              if "$GENERATE_APPCAST" sparkle_assets/x64/; then
+                mv sparkle_assets/x64/appcast.xml appcast-x64.xml
+              else
+                echo "⚠️  Failed to generate x64 appcast."
+              fi
+
+              if "$GENERATE_APPCAST" sparkle_assets/arm64/; then
+                mv sparkle_assets/arm64/appcast.xml appcast-arm64.xml
+              else
+                echo "⚠️  Failed to generate arm64 appcast."
+              fi
+
+              if [[ -f appcast-x64.xml && -f appcast-arm64.xml ]]; then
+                git add appcast-x64.xml appcast-arm64.xml
+                git commit -m "chore: update Sparkle appcasts for v1" || true
+                git push origin main || true
+                gh release upload v1 appcast-x64.xml appcast-arm64.xml --clobber
+                echo "Sparkle appcasts updated."
+              fi
             else
                echo "⚠️  generate_appcast tool not found!"
             fi
           else
             echo "⏭️  Skipping appcast generation (SPARKLE_PRIVATE_KEY missing)."
-          fi
-
-          if [[ -f appcast.xml ]]; then
-            gh release upload v1 appcast.xml --clobber
           fi
