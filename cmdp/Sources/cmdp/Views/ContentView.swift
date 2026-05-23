@@ -394,11 +394,11 @@ struct ContentView: View {
     func executeSelection(_ result: SearchResult) {
         if result.Item.itemType == .command {
             executeCommand(result.Item.Path)
-        } else if result.Item.itemType == .file {
-            // Files open in their default application
+        } else if result.Item.itemType == .app {
+            // Apps launch/open
             NSWorkspace.shared.open(URL(fileURLWithPath: result.Item.Path))
         } else {
-            // Apps and Folders reveal in Finder
+            // Folders and Files reveal in Finder (selects the item in its parent directory)
             NSWorkspace.shared.activateFileViewerSelecting([URL(fileURLWithPath: result.Item.Path)])
         }
         NSApp.hide(nil)
