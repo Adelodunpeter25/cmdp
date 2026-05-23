@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/fsnotify/fsnotify"
+	"github.com/Adelodunpeter25/cmdp/daemon/internal/utils"
 )
 
 func (m *Manager) Watch() {
@@ -46,6 +47,9 @@ func (m *Manager) Watch() {
 	addRecursive := func(root string) {
 		var walk func(string) error
 		walk = func(path string) error {
+			if utils.ShouldIgnore(path, root) {
+				return nil
+			}
 			info, err := os.Lstat(path)
 			if err != nil {
 				return nil
@@ -123,6 +127,9 @@ func (m *Manager) Watch() {
 					return
 				}
 				if isInsideAppBundle(event.Name) {
+					continue
+				}
+				if utils.ShouldIgnore(event.Name, "") {
 					continue
 				}
 				if event.Op&fsnotify.Create == fsnotify.Create {
