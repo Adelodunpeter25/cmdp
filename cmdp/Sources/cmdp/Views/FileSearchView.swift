@@ -54,11 +54,11 @@ struct FileResultRow: View {
 
     var body: some View {
         HStack(spacing: 12) {
-            Image(systemName: fileIcon(for: result.Item.Name))
+            Image(systemName: "doc.fill")
                 .resizable()
                 .aspectRatio(contentMode: .fit)
                 .frame(width: Theme.iconSize - 6, height: Theme.iconSize - 6)
-                .foregroundColor(isSelected ? Theme.textSelected : .secondary)
+                .foregroundColor(.blue)
                 .padding(3)
 
             VStack(alignment: .leading, spacing: 1) {
@@ -94,36 +94,9 @@ struct FileResultRow: View {
         .contentShape(Rectangle())
     }
 
-    private func fileIcon(for filename: String) -> String {
-        let ext = (filename as NSString).pathExtension.lowercased()
-        switch ext {
-        case "png", "jpg", "jpeg", "gif", "svg", "heic":
-            return "photo"
-        case "pdf":
-            return "doc.richtext"
-        case "txt", "md", "rtf", "pages":
-            return "doc.text"
-        case "doc", "docx":
-            return "doc.text.fill"
-        case "xls", "xlsx", "numbers":
-            return "tablecells"
-        case "ppt", "pptx", "key":
-            return "play.rectangle"
-        case "zip", "tar", "gz", "rar", "7z":
-            return "archivebox"
-        case "mp3", "wav", "m4a", "flac":
-            return "music.note"
-        case "mp4", "mov", "avi", "mkv":
-            return "film"
-        case "go", "swift", "py", "js", "ts", "json", "html", "css", "c", "cpp", "h", "java", "sh":
-            return "doc.plaintext"
-        default:
-            return "doc"
-        }
-    }
-
     private func fileBadge(for filename: String) -> String {
         let ext = (filename as NSString).pathExtension.uppercased()
         return ext.isEmpty ? "FILE" : ext
     }
 }
+
