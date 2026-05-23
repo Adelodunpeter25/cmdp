@@ -139,6 +139,7 @@ jobs:
                if "$GENERATE_APPCAST" sparkle_assets/; then
                  # The tool generates appcast.xml in the sparkle_assets folder
                  mv sparkle_assets/appcast.xml .
+                 cp appcast.xml "$GITHUB_WORKSPACE/appcast.xml"
                  
                  # Commit appcast.xml back to the repo
                  git add appcast.xml
@@ -154,4 +155,8 @@ jobs:
             fi
           else
             echo "⏭️  Skipping appcast generation (SPARKLE_PRIVATE_KEY missing)."
+          fi
+
+          if [[ -f appcast.xml ]]; then
+            gh release upload v1 appcast.xml --clobber
           fi
