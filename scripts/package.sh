@@ -94,6 +94,8 @@ cat <<PLIST > "${APP_NAME}.app/Contents/Info.plist"
     <string>https://raw.githubusercontent.com/Adelodunpeter25/cmdp/main/appcast.xml</string>
     <key>SUPublicEDKey</key>
     <string>APWKwPLf5U6sLRsYxxuUCrhCYVwtEl4ihDl1XJUNylI=</string>
+    <key>SUScheduledCheckInterval</key>
+    <integer>43200</integer>
     <key>LSMinimumSystemVersion</key>
     <string>13.0</string>
     <key>LSUIElement</key>
