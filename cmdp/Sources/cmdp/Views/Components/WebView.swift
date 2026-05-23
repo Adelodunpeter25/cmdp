@@ -11,6 +11,9 @@ struct WebView: NSViewRepresentable {
         // Make the background transparent to blend nicely with the HUD material
         webView.setValue(false, forKey: "drawsBackground")
         
+        // Force dark mode rendering
+        webView.appearance = NSAppearance(named: .darkAqua)
+        
         let request = URLRequest(url: url)
         webView.load(request)
         return webView

@@ -34,6 +34,7 @@ struct ContentView: View {
     @State private var selectedIndex: Int = 0
     @State private var hoveredIndex: Int? = nil
     @State private var activeWebURL: URL? = nil
+    @State private var isWebSearchMode: Bool = false
     @FocusState private var isSearchFieldFocused: Bool
     @State private var searchDebounceItem: DispatchWorkItem?
 
@@ -77,12 +78,12 @@ struct ContentView: View {
         VStack(spacing: 0) {
             // Search Bar
             HStack {
-                Image(systemName: searchText.hasPrefix("/") ? "magnifyingglass" : "command")
+                Image(systemName: isWebSearchMode ? "globe" : (searchText.hasPrefix("/") ? "magnifyingglass" : "command"))
                     .font(.system(size: 22, weight: .light))
                     .foregroundColor(Theme.searchIconColor)
                     .padding(.leading, 4)
 
-                TextField("Search file, folder or command...", text: $searchText)
+                TextField(isWebSearchMode ? "Search the web..." : "Search file, folder or command...", text: $searchText)
                     .textFieldStyle(.plain)
                     .font(.system(size: 22, weight: .light))
                     .focused($isSearchFieldFocused)
@@ -91,6 +92,12 @@ struct ContentView: View {
 
                         if activeWebURL != nil {
                             activeWebURL = nil
+                        }
+
+                        if isWebSearchMode {
+                            selectedIndex = 0
+                            updateWindowSize()
+                            return
                         }
 
                         if newValue.isEmpty {
@@ -120,97 +127,136 @@ struct ContentView: View {
             .background(Theme.windowBackground)
 
             // Results Area & Dashboard Empty State
-            if let webURL = activeWebURL {
-                Divider()
-                WebView(url: webURL)
-                    .frame(height: 400)
-                    .transition(.opacity)
-            } else if !searchText.isEmpty {
-                Divider()
-                if searchText.hasPrefix("/") {
-                    FileSearchView(
-                        results: groupedResults,
-                        selectedIndex: selectedIndex,
-                        hoveredIndex: $hoveredIndex,
-                        onTapRow: { index, result in
-                            if selectedIndex == index {
-                                executeSelection(result)
-                            } else {
-                                selectedIndex = index
-                            }
-                        }
-                    )
-                    .transition(.opacity)
+            if isWebSearchMode {
+                if let webURL = activeWebURL {
+                    Divider()
+                    WebView(url: webURL)
+                        .frame(height: 400)
+                        .transition(.opacity)
                 } else {
-                    ScrollViewReader { proxy in
-                        ScrollView {
-                            LazyVStack(spacing: Theme.rowSpacing, pinnedViews: [.sectionHeaders]) {
-                                WebSearchRow(
-                                    query: searchText,
-                                    isSelected: selectedIndex == 0,
-                                    isHovered: hoveredIndex == 0
-                                )
-                                .onHover { hoveredIndex = $0 ? 0 : nil }
-                                .onTapGesture {
-                                    if let url = WebService.shared.searchURL(for: searchText) {
-                                        activeWebURL = url
-                                    }
-                                }
-                                .id("web-search-row")
-
-                                resultSection
+                    Divider()
+                    if searchText.isEmpty {
+                        // Thin Web Search Info Card
+                        VStack(spacing: 8) {
+                            HStack(spacing: 12) {
+                                Image(systemName: "globe")
+                                    .font(.system(size: 16, weight: .bold))
+                                    .foregroundColor(.blue)
+                                Text("Web Search Mode")
+                                    .font(.system(size: 13, weight: .bold))
+                                    .foregroundColor(Theme.textPrimary)
+                                Spacer()
+                                Text("Esc to Go Back")
+                                    .font(.system(size: 10, weight: .medium))
+                                    .foregroundColor(Theme.textSecondary.opacity(0.8))
+                                    .padding(.horizontal, 6)
+                                    .padding(.vertical, 2)
+                                    .background(
+                                        RoundedRectangle(cornerRadius: 4)
+                                            .fill(Theme.hoverBackground)
+                                    )
                             }
-                            .padding(.horizontal, 8)
-                            .padding(.vertical, 8)
+                            Text("Type a query and press Enter to search Google.")
+                                .font(.system(size: 11))
+                                .foregroundColor(Theme.textSecondary)
+                                .frame(maxWidth: .infinity, alignment: .leading)
                         }
-                        .frame(maxHeight: 350)
-                        .scrollIndicators(.hidden)
-                        .onChange(of: selectedIndex) { _ in
-                            if selectedIndex == 0 {
-                                proxy.scrollTo("web-search-row", anchor: .center)
-                            } else {
-                                let idx = selectedIndex - 1
-                                if idx >= 0 && idx < groupedResults.count {
-                                    let targetId = "result-\(idx)-\(groupedResults[idx].id)"
-                                    proxy.scrollTo(targetId, anchor: .center)
+                        .padding(.horizontal, 16)
+                        .padding(.vertical, 12)
+                        .background(
+                            RoundedRectangle(cornerRadius: Theme.rowCornerRadius)
+                                .fill(Theme.hoverBackground.opacity(0.3))
+                        )
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 8)
+                        .transition(.opacity)
+                    } else {
+                        // Thinner Web Search Row Card
+                        VStack(spacing: 0) {
+                            WebSearchRow(
+                                query: searchText,
+                                isSelected: selectedIndex == 0,
+                                isHovered: hoveredIndex == 0
+                            )
+                            .onHover { hoveredIndex = $0 ? 0 : nil }
+                            .onTapGesture {
+                                if let url = WebService.shared.searchURL(for: searchText) {
+                                    activeWebURL = url
                                 }
                             }
                         }
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 8)
+                        .transition(.opacity)
                     }
-                    .transition(.opacity)
                 }
             } else {
-                Divider()
-                VStack(spacing: 0) {
-                    WebSearchRow(
-                        query: "",
-                        isSelected: selectedIndex == 0,
-                        isHovered: hoveredIndex == 0
-                    )
-                    .onHover { hoveredIndex = $0 ? 0 : nil }
-                    .onTapGesture {
-                        if let url = WebService.shared.searchURL(for: "") {
-                            activeWebURL = url
-                        }
-                    }
-                    .padding(.horizontal, 8)
-                    .padding(.top, 8)
-
-                    if let stats = processService.systemStats {
-                        ProcessCard(stats: stats)
-                            .transition(.opacity)
+                if !searchText.isEmpty {
+                    Divider()
+                    if searchText.hasPrefix("/") {
+                        FileSearchView(
+                            results: groupedResults,
+                            selectedIndex: selectedIndex,
+                            hoveredIndex: $hoveredIndex,
+                            onTapRow: { index, result in
+                                if selectedIndex == index {
+                                    executeSelection(result)
+                                } else {
+                                    selectedIndex = index
+                                }
+                            }
+                        )
+                        .transition(.opacity)
                     } else {
-                        HStack {
-                            Spacer()
-                            ProgressView()
-                                .scaleEffect(0.8)
-                                .padding()
-                            Text("Loading system stats...")
-                                .font(.system(size: 12))
-                                .foregroundColor(Theme.textSecondary)
-                            Spacer()
+                        ScrollViewReader { proxy in
+                            ScrollView {
+                                LazyVStack(spacing: Theme.rowSpacing, pinnedViews: [.sectionHeaders]) {
+                                    resultSection
+                                }
+                                .padding(.horizontal, 8)
+                                .padding(.vertical, 8)
+                            }
+                            .frame(maxHeight: 350)
+                            .scrollIndicators(.hidden)
+                            .onChange(of: selectedIndex) { _ in
+                                let targetId = "result-\(selectedIndex)-\(groupedResults[safe: selectedIndex]?.id ?? "")"
+                                proxy.scrollTo(targetId, anchor: .center)
+                            }
                         }
-                        .frame(height: 140)
+                        .transition(.opacity)
+                    }
+                } else {
+                    Divider()
+                    VStack(spacing: 0) {
+                        WebSearchCard(
+                            isSelected: selectedIndex == 0,
+                            isHovered: hoveredIndex == 0
+                        )
+                        .onHover { hoveredIndex = $0 ? 0 : nil }
+                        .onTapGesture {
+                            isWebSearchMode = true
+                            searchText = ""
+                            selectedIndex = 0
+                        }
+                        .padding(.horizontal, 12)
+                        .padding(.top, 8)
+
+                        if let stats = processService.systemStats {
+                            ProcessCard(stats: stats)
+                                .transition(.opacity)
+                        } else {
+                            HStack {
+                                Spacer()
+                                ProgressView()
+                                    .scaleEffect(0.8)
+                                    .padding()
+                                Text("Loading system stats...")
+                                    .font(.system(size: 12))
+                                    .foregroundColor(Theme.textSecondary)
+                                Spacer()
+                            }
+                            .frame(height: 140)
+                        }
                     }
                 }
             }
@@ -233,6 +279,7 @@ struct ContentView: View {
         .onChange(of: searchService.results) { _ in updateWindowSize() }
         .onChange(of: processService.systemStats) { _ in updateWindowSize() }
         .onChange(of: activeWebURL) { _ in updateWindowSize() }
+        .onChange(of: isWebSearchMode) { _ in updateWindowSize() }
     }
 
     // MARK: - Sub-views
@@ -248,16 +295,12 @@ struct ContentView: View {
             case .result(let result, let index):
                 ResultRow(
                     result: result,
-                    isSelected: selectedIndex == index + 1,
-                    isHovered: hoveredIndex == index + 1
+                    isSelected: selectedIndex == index,
+                    isHovered: hoveredIndex == index
                 )
-                .onHover { hoveredIndex = $0 ? index + 1 : nil }
+                .onHover { hoveredIndex = $0 ? index : nil }
                 .onTapGesture {
-                    if selectedIndex == index + 1 {
-                        executeSelection(result)
-                    } else {
-                        selectedIndex = index + 1
-                    }
+                    selectedIndex == index ? executeSelection(result) : (selectedIndex = index)
                 }
                 .id(item.id)
             }
@@ -389,7 +432,22 @@ struct ContentView: View {
                 }
             }
 
-            let totalSelectable = searchText.hasPrefix("/") ? groupedResults.count : (searchText.isEmpty ? 1 : groupedResults.count + 1)
+            let totalSelectable: Int
+            if isWebSearchMode {
+                if activeWebURL != nil {
+                    totalSelectable = 0
+                } else if searchText.isEmpty {
+                    totalSelectable = 0
+                } else {
+                    totalSelectable = 1
+                }
+            } else {
+                if searchText.isEmpty {
+                    totalSelectable = 1
+                } else {
+                    totalSelectable = groupedResults.count
+                }
+            }
 
             switch event.keyCode {
             case 125: // ↓
@@ -399,32 +457,34 @@ struct ContentView: View {
                 if selectedIndex > 0 { selectedIndex -= 1 }
                 return nil
             case 36: // ↵ Enter
-                if activeWebURL != nil {
-                    // Update search on web
+                if isWebSearchMode {
                     if let url = WebService.shared.searchURL(for: searchText) {
                         activeWebURL = url
                     }
-                } else if searchText.hasPrefix("/") {
-                    if selectedIndex < groupedResults.count {
-                        executeSelection(groupedResults[selectedIndex])
-                    }
                 } else {
-                    if selectedIndex == 0 {
-                        if let url = WebService.shared.searchURL(for: searchText) {
-                            activeWebURL = url
+                    if searchText.isEmpty {
+                        if selectedIndex == 0 {
+                            isWebSearchMode = true
+                            searchText = ""
+                            selectedIndex = 0
                         }
                     } else {
-                        let idx = selectedIndex - 1
-                        if idx >= 0 && idx < groupedResults.count {
-                            executeSelection(groupedResults[idx])
+                        if selectedIndex < groupedResults.count {
+                            executeSelection(groupedResults[selectedIndex])
                         }
                     }
                 }
                 return nil
             case 53: // Esc
-                if activeWebURL != nil {
-                    activeWebURL = nil
-                    selectedIndex = 0
+                if isWebSearchMode {
+                    if activeWebURL != nil {
+                        activeWebURL = nil
+                        selectedIndex = 0
+                    } else {
+                        isWebSearchMode = false
+                        searchText = ""
+                        selectedIndex = 0
+                    }
                 } else {
                     searchText.isEmpty ? NSApp.hide(nil) : clearSearch()
                 }
@@ -622,6 +682,54 @@ struct WebSearchRow: View {
         .background(
             RoundedRectangle(cornerRadius: Theme.rowCornerRadius)
                 .fill(isSelected ? Theme.selectionBackground : (isHovered ? Theme.hoverBackground : Color.clear))
+        )
+        .contentShape(Rectangle())
+    }
+}
+
+// MARK: - WebSearchCard
+
+struct WebSearchCard: View {
+    let isSelected: Bool
+    let isHovered: Bool
+    
+    var body: some View {
+        HStack(spacing: 16) {
+            ZStack {
+                Circle()
+                    .fill(isSelected ? Color.white.opacity(0.2) : Color.blue.opacity(0.15))
+                    .frame(width: 36, height: 36)
+                
+                Image(systemName: "globe")
+                    .font(.system(size: 18, weight: .medium))
+                    .foregroundColor(isSelected ? .white : .blue)
+            }
+            
+            VStack(alignment: .leading, spacing: 2) {
+                Text("Web Search")
+                    .font(.system(size: 14, weight: .bold))
+                    .foregroundColor(isSelected ? .white : Theme.textPrimary)
+                
+                Text("Search Google directly from cmdp")
+                    .font(.system(size: 11))
+                    .foregroundColor(isSelected ? Color.white.opacity(0.7) : Theme.textSecondary)
+            }
+            
+            Spacer()
+            
+            Image(systemName: "chevron.right")
+                .font(.system(size: 12, weight: .bold))
+                .foregroundColor(isSelected ? Color.white.opacity(0.8) : Theme.textSecondary.opacity(0.5))
+        }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 12)
+        .background(
+            RoundedRectangle(cornerRadius: Theme.rowCornerRadius)
+                .fill(isSelected ? Theme.selectionBackground : Theme.hoverBackground.opacity(0.3))
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: Theme.rowCornerRadius)
+                .stroke(isSelected ? Color.accentColor : Color.clear, lineWidth: 1)
         )
         .contentShape(Rectangle())
     }
