@@ -33,6 +33,7 @@ struct ContentView: View {
     @State private var searchText: String = ""
     @State private var selectedIndex: Int = 0
     @State private var hoveredIndex: Int? = nil
+    @State private var activeWebURL: URL? = nil
     @FocusState private var isSearchFieldFocused: Bool
     @State private var searchDebounceItem: DispatchWorkItem?
 
@@ -88,6 +89,10 @@ struct ContentView: View {
                     .onChange(of: searchText) { newValue in
                         searchDebounceItem?.cancel()
 
+                        if activeWebURL != nil {
+                            activeWebURL = nil
+                        }
+
                         if newValue.isEmpty {
                             processService.startPolling()
                         } else {
@@ -115,61 +120,98 @@ struct ContentView: View {
             .background(Theme.windowBackground)
 
             // Results Area & Dashboard Empty State
-            if !searchText.isEmpty {
-                if !searchService.results.isEmpty {
-                    Divider()
-
-                    if searchText.hasPrefix("/") {
-                        FileSearchView(
-                            results: groupedResults,
-                            selectedIndex: selectedIndex,
-                            hoveredIndex: $hoveredIndex,
-                            onTapRow: { index, result in
-                                if selectedIndex == index {
-                                    executeSelection(result)
-                                } else {
-                                    selectedIndex = index
-                                }
-                            }
-                        )
-                        .transition(.opacity)
-                    } else {
-                        ScrollViewReader { proxy in
-                            ScrollView {
-                                LazyVStack(spacing: Theme.rowSpacing, pinnedViews: [.sectionHeaders]) {
-                                    resultSection
-                                }
-                                .padding(.horizontal, 8)
-                                .padding(.vertical, 8)
-                            }
-                            .frame(maxHeight: 350)
-                            .scrollIndicators(.hidden)
-                            .onChange(of: selectedIndex) { _ in
-                                // Scroll to the result item, not a header
-                                let targetId = "result-\(selectedIndex)-\(groupedResults[safe: selectedIndex]?.id ?? "")"
-                                proxy.scrollTo(targetId, anchor: .center)
+            if let webURL = activeWebURL {
+                Divider()
+                WebView(url: webURL)
+                    .frame(height: 400)
+                    .transition(.opacity)
+            } else if !searchText.isEmpty {
+                Divider()
+                if searchText.hasPrefix("/") {
+                    FileSearchView(
+                        results: groupedResults,
+                        selectedIndex: selectedIndex,
+                        hoveredIndex: $hoveredIndex,
+                        onTapRow: { index, result in
+                            if selectedIndex == index {
+                                executeSelection(result)
+                            } else {
+                                selectedIndex = index
                             }
                         }
-                        .transition(.opacity)
+                    )
+                    .transition(.opacity)
+                } else {
+                    ScrollViewReader { proxy in
+                        ScrollView {
+                            LazyVStack(spacing: Theme.rowSpacing, pinnedViews: [.sectionHeaders]) {
+                                WebSearchRow(
+                                    query: searchText,
+                                    isSelected: selectedIndex == 0,
+                                    isHovered: hoveredIndex == 0
+                                )
+                                .onHover { hoveredIndex = $0 ? 0 : nil }
+                                .onTapGesture {
+                                    if let url = WebService.shared.searchURL(for: searchText) {
+                                        activeWebURL = url
+                                    }
+                                }
+                                .id("web-search-row")
+
+                                resultSection
+                            }
+                            .padding(.horizontal, 8)
+                            .padding(.vertical, 8)
+                        }
+                        .frame(maxHeight: 350)
+                        .scrollIndicators(.hidden)
+                        .onChange(of: selectedIndex) { _ in
+                            if selectedIndex == 0 {
+                                proxy.scrollTo("web-search-row", anchor: .center)
+                            } else {
+                                let idx = selectedIndex - 1
+                                if idx >= 0 && idx < groupedResults.count {
+                                    let targetId = "result-\(idx)-\(groupedResults[idx].id)"
+                                    proxy.scrollTo(targetId, anchor: .center)
+                                }
+                            }
+                        }
                     }
+                    .transition(.opacity)
                 }
             } else {
                 Divider()
-                if let stats = processService.systemStats {
-                    ProcessCard(stats: stats)
-                        .transition(.opacity)
-                } else {
-                    HStack {
-                        Spacer()
-                        ProgressView()
-                            .scaleEffect(0.8)
-                            .padding()
-                        Text("Loading system stats...")
-                            .font(.system(size: 12))
-                            .foregroundColor(Theme.textSecondary)
-                        Spacer()
+                VStack(spacing: 0) {
+                    WebSearchRow(
+                        query: "",
+                        isSelected: selectedIndex == 0,
+                        isHovered: hoveredIndex == 0
+                    )
+                    .onHover { hoveredIndex = $0 ? 0 : nil }
+                    .onTapGesture {
+                        if let url = WebService.shared.searchURL(for: "") {
+                            activeWebURL = url
+                        }
                     }
-                    .frame(height: 140)
+                    .padding(.horizontal, 8)
+                    .padding(.top, 8)
+
+                    if let stats = processService.systemStats {
+                        ProcessCard(stats: stats)
+                            .transition(.opacity)
+                    } else {
+                        HStack {
+                            Spacer()
+                            ProgressView()
+                                .scaleEffect(0.8)
+                                .padding()
+                            Text("Loading system stats...")
+                                .font(.system(size: 12))
+                                .foregroundColor(Theme.textSecondary)
+                            Spacer()
+                        }
+                        .frame(height: 140)
+                    }
                 }
             }
         }
@@ -190,6 +232,7 @@ struct ContentView: View {
         }
         .onChange(of: searchService.results) { _ in updateWindowSize() }
         .onChange(of: processService.systemStats) { _ in updateWindowSize() }
+        .onChange(of: activeWebURL) { _ in updateWindowSize() }
     }
 
     // MARK: - Sub-views
@@ -205,12 +248,16 @@ struct ContentView: View {
             case .result(let result, let index):
                 ResultRow(
                     result: result,
-                    isSelected: selectedIndex == index,
-                    isHovered: hoveredIndex == index
+                    isSelected: selectedIndex == index + 1,
+                    isHovered: hoveredIndex == index + 1
                 )
-                .onHover { hoveredIndex = $0 ? index : nil }
+                .onHover { hoveredIndex = $0 ? index + 1 : nil }
                 .onTapGesture {
-                    selectedIndex == index ? executeSelection(result) : (selectedIndex = index)
+                    if selectedIndex == index + 1 {
+                        executeSelection(result)
+                    } else {
+                        selectedIndex = index + 1
+                    }
                 }
                 .id(item.id)
             }
@@ -342,22 +389,45 @@ struct ContentView: View {
                 }
             }
 
-            let resultCount = groupedResults.count
+            let totalSelectable = searchText.hasPrefix("/") ? groupedResults.count : (searchText.isEmpty ? 1 : groupedResults.count + 1)
 
             switch event.keyCode {
             case 125: // ↓
-                if selectedIndex < resultCount - 1 { selectedIndex += 1 }
+                if selectedIndex < totalSelectable - 1 { selectedIndex += 1 }
                 return nil
             case 126: // ↑
                 if selectedIndex > 0 { selectedIndex -= 1 }
                 return nil
             case 36: // ↵ Enter
-                if selectedIndex < groupedResults.count {
-                    executeSelection(groupedResults[selectedIndex])
+                if activeWebURL != nil {
+                    // Update search on web
+                    if let url = WebService.shared.searchURL(for: searchText) {
+                        activeWebURL = url
+                    }
+                } else if searchText.hasPrefix("/") {
+                    if selectedIndex < groupedResults.count {
+                        executeSelection(groupedResults[selectedIndex])
+                    }
+                } else {
+                    if selectedIndex == 0 {
+                        if let url = WebService.shared.searchURL(for: searchText) {
+                            activeWebURL = url
+                        }
+                    } else {
+                        let idx = selectedIndex - 1
+                        if idx >= 0 && idx < groupedResults.count {
+                            executeSelection(groupedResults[idx])
+                        }
+                    }
                 }
                 return nil
             case 53: // Esc
-                searchText.isEmpty ? NSApp.hide(nil) : clearSearch()
+                if activeWebURL != nil {
+                    activeWebURL = nil
+                    selectedIndex = 0
+                } else {
+                    searchText.isEmpty ? NSApp.hide(nil) : clearSearch()
+                }
                 return nil
             default:
                 return event
@@ -504,6 +574,56 @@ struct VisualEffectView: NSViewRepresentable {
     func updateNSView(_ nsView: NSVisualEffectView, context: Context) {
         nsView.material = material
         nsView.blendingMode = blendingMode
+    }
+}
+
+// MARK: - WebSearchRow
+
+struct WebSearchRow: View {
+    let query: String
+    let isSelected: Bool
+    let isHovered: Bool
+
+    var body: some View {
+        HStack(spacing: 12) {
+            Image(systemName: "globe")
+                .resizable()
+                .aspectRatio(contentMode: .fit)
+                .frame(width: Theme.iconSize - 4, height: Theme.iconSize - 4)
+                .foregroundColor(isSelected ? Theme.textSelected : .blue)
+                .padding(2)
+
+            VStack(alignment: .leading, spacing: 1) {
+                Text(query.isEmpty ? "Web Search" : "Search the Web")
+                    .font(.system(size: 14, weight: isSelected ? .semibold : .regular))
+                    .foregroundColor(isSelected ? Theme.textSelected : Theme.textPrimary)
+                    .lineLimit(1)
+
+                Text(query.isEmpty ? "Open Google" : "Search Google for \"\(query)\"")
+                    .font(.system(size: 10))
+                    .foregroundColor(isSelected ? Theme.textSelected.opacity(0.7) : Theme.textSecondary)
+                    .lineLimit(1)
+            }
+
+            Spacer()
+
+            Text("Web")
+                .font(.system(size: 10, weight: .medium))
+                .foregroundColor(isSelected ? Theme.textSelected.opacity(0.7) : Theme.textSecondary.opacity(0.8))
+                .padding(.horizontal, 6)
+                .padding(.vertical, 2)
+                .background(
+                    RoundedRectangle(cornerRadius: 4)
+                        .fill(isSelected ? Color.white.opacity(0.15) : Theme.hoverBackground)
+                )
+        }
+        .padding(.vertical, Theme.rowPaddingVertical)
+        .padding(.horizontal, Theme.rowPaddingHorizontal)
+        .background(
+            RoundedRectangle(cornerRadius: Theme.rowCornerRadius)
+                .fill(isSelected ? Theme.selectionBackground : (isHovered ? Theme.hoverBackground : Color.clear))
+        )
+        .contentShape(Rectangle())
     }
 }
 
