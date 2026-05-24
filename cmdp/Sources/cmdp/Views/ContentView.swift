@@ -148,6 +148,7 @@ struct ContentView: View {
                         hoveredIndex: $hoveredIndex,
                         isWebSearchMode: $isWebSearchMode,
                         searchText: $searchText,
+                        processSortByCPU: $processSortByCPU,
                         processService: processService,
                         onOpenActivityMonitor: {
                             openActivityMonitor()

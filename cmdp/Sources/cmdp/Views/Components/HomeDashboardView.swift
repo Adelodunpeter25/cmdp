@@ -5,6 +5,7 @@ struct HomeDashboardView: View {
     @Binding var hoveredIndex: Int?
     @Binding var isWebSearchMode: Bool
     @Binding var searchText: String
+    @Binding var processSortByCPU: Bool
     @ObservedObject var processService: ProcessService
     let onOpenActivityMonitor: () -> Void
 
@@ -24,11 +25,19 @@ struct HomeDashboardView: View {
             .padding(.top, 8)
 
             if let stats = processService.systemStats {
-                ProcessCard(stats: stats)
-                    .onTapGesture {
+                HStack(spacing: 12) {
+                    CPUProcessCard(stats: stats) {
+                        processSortByCPU = true
                         onOpenActivityMonitor()
                     }
-                    .transition(.opacity)
+                    MemoryProcessCard(stats: stats) {
+                        processSortByCPU = false
+                        onOpenActivityMonitor()
+                    }
+                }
+                .padding(.horizontal, 12)
+                .padding(.vertical, 8)
+                .transition(.opacity)
             } else {
                 HStack {
                     Spacer()
