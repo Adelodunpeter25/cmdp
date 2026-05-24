@@ -1,30 +1,6 @@
 import SwiftUI
 import CLibSearch
 
-// MARK: - Display item model
-
-/// A flat list item for the LazyVStack — either a sticky section header
-/// or a result row.  Using an enum gives each item a stable, unique ID
-/// so LazyVStack never sees duplicate IDs.
-private enum DisplayItem: Identifiable {
-    case header(String)
-    /// result + its global index in the flattened display order
-    case result(SearchResult, Int)
-
-    var id: String {
-        switch self {
-        case .header(let title):      return "header-\(title)"
-        case .result(let r, let i):  return "result-\(i)-\(r.id)"
-        }
-    }
-
-    /// Global index for scroll-to and selectedIndex matching.
-    /// Headers return nil — they are never selectable.
-    var globalIndex: Int? {
-        if case .result(_, let i) = self { return i }
-        return nil
-    }
-}
 
 // MARK: - ContentView
 
@@ -80,62 +56,13 @@ struct ContentView: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            // Search Bar
-            HStack {
-                Image(systemName: isActivityMonitorMode ? "cpu" : (isWebSearchMode ? "globe" : (searchText.hasPrefix("/") ? "magnifyingglass" : "command")))
-                    .font(.system(size: 22, weight: .light))
-                    .foregroundColor(Theme.searchIconColor)
-                    .padding(.leading, 4)
-
-                TextField(isActivityMonitorMode ? "Search processes..." : (isWebSearchMode ? "Search the web..." : "Search file, folder or command..."), text: $searchText)
-                    .textFieldStyle(.plain)
-                    .font(.system(size: 22, weight: .light))
-                    .focused($isSearchFieldFocused)
-                    .onChange(of: searchText) { newValue in
-                        if isActivityMonitorMode {
-                            selectedIndex = 0
-                            updateWindowSize()
-                            return
-                        }
-
-                        searchDebounceItem?.cancel()
-
-                        if activeWebURL != nil {
-                            loadedWebURL = nil
-                            activeWebURL = nil
-                        }
-
-                        if isWebSearchMode {
-                            selectedIndex = 0
-                            updateWindowSize()
-                            return
-                        }
-
-                        if newValue.isEmpty {
-                            processService.startPolling()
-                        } else {
-                            processService.stopPolling()
-                        }
-                        let item = DispatchWorkItem {
-                            searchService.search(query: newValue)
-                            selectedIndex = 0
-                            updateWindowSize()
-                        }
-                        searchDebounceItem = item
-                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.05, execute: item)
-                    }
-
-                if !searchText.isEmpty {
-                    Button(action: { clearSearch() }) {
-                        Image(systemName: "xmark.circle.fill")
-                            .foregroundColor(Theme.searchIconColor)
-                    }
-                    .buttonStyle(.plain)
-                }
-            }
-            .padding(.horizontal, 16)
-            .padding(.vertical, 12)
-            .background(Theme.windowBackground)
+            SearchBarView(
+                searchText: $searchText,
+                isActivityMonitorMode: isActivityMonitorMode,
+                isWebSearchMode: isWebSearchMode,
+                isSearchFieldFocused: $isSearchFieldFocused,
+                onClear: { clearSearch() }
+            )
 
             // Results Area & Dashboard Empty State
             if isActivityMonitorMode {
@@ -199,59 +126,33 @@ struct ContentView: View {
                         )
                         .transition(.opacity)
                     } else {
-                        ScrollViewReader { proxy in
-                            ScrollView {
-                                LazyVStack(spacing: Theme.rowSpacing, pinnedViews: [.sectionHeaders]) {
-                                    resultSection
+                        SearchListView(
+                            displayItems: displayItems,
+                            groupedResults: groupedResults,
+                            selectedIndex: $selectedIndex,
+                            hoveredIndex: $hoveredIndex,
+                            onTapRow: { index, result in
+                                if selectedIndex == index {
+                                    executeSelection(result)
+                                } else {
+                                    selectedIndex = index
                                 }
-                                .padding(.horizontal, 8)
-                                .padding(.vertical, 8)
                             }
-                            .frame(maxHeight: 350)
-                            .scrollIndicators(.hidden)
-                            .onChange(of: selectedIndex) { _ in
-                                let targetId = "result-\(selectedIndex)-\(groupedResults[safe: selectedIndex]?.id ?? "")"
-                                proxy.scrollTo(targetId, anchor: .center)
-                            }
-                        }
+                        )
                         .transition(.opacity)
                     }
                 } else if searchText.isEmpty {
                     Divider()
-                    VStack(spacing: 0) {
-                        WebSearchCard(
-                            isSelected: selectedIndex == 0,
-                            isHovered: hoveredIndex == 0
-                        )
-                        .onHover { hoveredIndex = $0 ? 0 : nil }
-                        .onTapGesture {
-                            isWebSearchMode = true
-                            searchText = ""
-                            selectedIndex = 0
+                    HomeDashboardView(
+                        selectedIndex: $selectedIndex,
+                        hoveredIndex: $hoveredIndex,
+                        isWebSearchMode: $isWebSearchMode,
+                        searchText: $searchText,
+                        processService: processService,
+                        onOpenActivityMonitor: {
+                            openActivityMonitor()
                         }
-                        .padding(.horizontal, 8)
-                        .padding(.top, 8)
-
-                        if let stats = processService.systemStats {
-                            ProcessCard(stats: stats)
-                                .onTapGesture {
-                                    openActivityMonitor()
-                                }
-                                .transition(.opacity)
-                        } else {
-                            HStack {
-                                Spacer()
-                                ProgressView()
-                                    .scaleEffect(0.8)
-                                    .padding()
-                                Text("Loading system stats...")
-                                    .font(.system(size: 12))
-                                    .foregroundColor(Theme.textSecondary)
-                                Spacer()
-                            }
-                            .frame(height: 140)
-                        }
-                    }
+                    )
                 }
             }
         }
@@ -270,6 +171,40 @@ struct ContentView: View {
         .onDisappear {
             processService.stopPolling()
         }
+        .onChange(of: searchText) { newValue in
+            // Observe and process text changes at parent level
+            if isActivityMonitorMode {
+                selectedIndex = 0
+                updateWindowSize()
+                return
+            }
+
+            searchDebounceItem?.cancel()
+
+            if activeWebURL != nil {
+                loadedWebURL = nil
+                activeWebURL = nil
+            }
+
+            if isWebSearchMode {
+                selectedIndex = 0
+                updateWindowSize()
+                return
+            }
+
+            if newValue.isEmpty {
+                processService.startPolling()
+            } else {
+                processService.stopPolling()
+            }
+            let item = DispatchWorkItem {
+                searchService.search(query: newValue)
+                selectedIndex = 0
+                updateWindowSize()
+            }
+            searchDebounceItem = item
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.05, execute: item)
+        }
         .onChange(of: searchService.results) { _ in updateWindowSize() }
         .onChange(of: processService.systemStats) { _ in updateWindowSize() }
         .onChange(of: activeWebURL) { _ in updateWindowSize() }
@@ -277,30 +212,6 @@ struct ContentView: View {
         .onChange(of: isActivityMonitorMode) { _ in updateWindowSize() }
     }
 
-    // MARK: - Sub-views
-
-    @ViewBuilder
-    private var resultSection: some View {
-        // Single flat ForEach over DisplayItem — unique IDs guaranteed by the enum.
-        ForEach(displayItems) { item in
-            switch item {
-            case .header(let title):
-                sectionHeader(title)
-
-            case .result(let result, let index):
-                ResultRow(
-                    result: result,
-                    isSelected: selectedIndex == index,
-                    isHovered: hoveredIndex == index
-                )
-                .onHover { hoveredIndex = $0 ? index : nil }
-                .onTapGesture {
-                    selectedIndex == index ? executeSelection(result) : (selectedIndex = index)
-                }
-                .id(item.id)
-            }
-        }
-    }
 
     // MARK: - Grouping
 
@@ -337,19 +248,6 @@ struct ContentView: View {
         return groups.flatMap { $0.items }
     }
 
-    // MARK: - Section header
-
-    private func sectionHeader(_ title: String) -> some View {
-        HStack {
-            Text(title)
-                .font(.system(size: 10, weight: .bold))
-                .foregroundColor(Theme.textSecondary.opacity(0.8))
-                .padding(.horizontal, 8)
-                .padding(.vertical, 4)
-            Spacer()
-        }
-        .background(VisualEffectView(material: .hudWindow, blendingMode: .behindWindow))
-    }
 
     // MARK: - Observers / lifecycle
 
