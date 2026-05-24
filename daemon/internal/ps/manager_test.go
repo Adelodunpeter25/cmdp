@@ -39,12 +39,12 @@ func TestGetStats(t *testing.T) {
 		t.Errorf("invalid UsedMemory: %d (Total: %d)", stats2.UsedMemory, stats2.TotalMemory)
 	}
 
-	// Verify top list capping works (cap to 3)
-	if len(stats2.TopMemoryProcs) > 3 {
-		t.Errorf("expected at most 3 top memory processes, got %d", len(stats2.TopMemoryProcs))
+	// Verify top list capping works (cap to 150)
+	if len(stats2.TopMemoryProcs) > 150 {
+		t.Errorf("expected at most 150 top memory processes, got %d", len(stats2.TopMemoryProcs))
 	}
-	if len(stats2.TopCPUProcs) > 3 {
-		t.Errorf("expected at most 3 top CPU processes, got %d", len(stats2.TopCPUProcs))
+	if len(stats2.TopCPUProcs) > 150 {
+		t.Errorf("expected at most 150 top CPU processes, got %d", len(stats2.TopCPUProcs))
 	}
 
 	// Verify top lists are sorted descending

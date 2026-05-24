@@ -101,6 +101,10 @@ extern void ResetIndex(void);
 // Swift is responsible for freeing the returned C string.
 extern char* GetSystemStats(void);
 
+// Kill a process by pid with a force flag. Returns 1 on success, 0 on failure.
+extern int KillProcess(int pid, int force);
+
 #ifdef __cplusplus
 }
 #endif
+

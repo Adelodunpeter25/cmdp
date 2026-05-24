@@ -179,6 +179,31 @@ func GetSystemStats() *C.char {
 	return C.CString(string(jsonData))
 }
 
+// KillProcess terminates a process by PID.
+// force = 0: SIGTERM (graceful)
+// force = 1: SIGKILL (forceful)
+//export KillProcess
+func KillProcess(pid C.int, force C.int) C.int {
+	p, err := os.FindProcess(int(pid))
+	if err != nil {
+		log.Printf("Bridge: Failed to find process %d: %v", pid, err)
+		return 0
+	}
+
+	var sig syscall.Signal
+	if force != 0 {
+		sig = syscall.SIGKILL
+	} else {
+		sig = syscall.SIGTERM
+	}
+
+	if err := p.Signal(sig); err != nil {
+		log.Printf("Bridge: Failed to send signal %v to process %d: %v", sig, pid, err)
+		return 0
+	}
+	return 1
+}
+
 func main() {
 	// We need an empty main for c-archive, but it won't be called.
 }

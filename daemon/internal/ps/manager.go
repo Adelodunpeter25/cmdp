@@ -102,8 +102,8 @@ func (m *StatsManager) GetStats() (*SystemStats, error) {
 		}
 		return topCPU[i].Pid < topCPU[j].Pid
 	})
-	if len(topCPU) > 3 {
-		topCPU = topCPU[:3]
+	if len(topCPU) > 150 {
+		topCPU = topCPU[:150]
 	} else if len(topCPU) == 0 {
 		topCPU = []ProcessInfo{}
 	}
@@ -117,8 +117,8 @@ func (m *StatsManager) GetStats() (*SystemStats, error) {
 		}
 		return topMemory[i].Pid < topMemory[j].Pid
 	})
-	if len(topMemory) > 3 {
-		topMemory = topMemory[:3]
+	if len(topMemory) > 150 {
+		topMemory = topMemory[:150]
 	} else if len(topMemory) == 0 {
 		topMemory = []ProcessInfo{}
 	}

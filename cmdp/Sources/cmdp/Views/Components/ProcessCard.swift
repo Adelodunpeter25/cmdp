@@ -18,7 +18,7 @@ struct ProcessCard: View {
                         .foregroundColor(Theme.textSecondary.opacity(0.8))
                         .padding(.bottom, 2)
                     
-                    ForEach(stats.topCPUProcs) { proc in
+                    ForEach(stats.topCPUProcs.prefix(3)) { proc in
                         processRow(name: proc.name, metric: String(format: "%.1f%%", proc.cpu))
                     }
                 }
@@ -47,7 +47,7 @@ struct ProcessCard: View {
                         .foregroundColor(Theme.textSecondary.opacity(0.8))
                         .padding(.bottom, 2)
                     
-                    ForEach(stats.topMemoryProcs) { proc in
+                    ForEach(stats.topMemoryProcs.prefix(3)) { proc in
                         let memFormatted = formatMemory(proc.memory)
                         processRow(name: proc.name, metric: memFormatted)
                     }

@@ -1,4 +1,5 @@
 import SwiftUI
+import CLibSearch
 
 // MARK: - Display item model
 
@@ -35,6 +36,8 @@ struct ContentView: View {
     @State private var hoveredIndex: Int? = nil
     @State private var activeWebURL: URL? = nil
     @State private var isWebSearchMode: Bool = false
+    @State private var isActivityMonitorMode: Bool = false
+    @State private var processSortByCPU: Bool = true
     @FocusState private var isSearchFieldFocused: Bool
     @State private var searchDebounceItem: DispatchWorkItem?
 
@@ -78,16 +81,22 @@ struct ContentView: View {
         VStack(spacing: 0) {
             // Search Bar
             HStack {
-                Image(systemName: isWebSearchMode ? "globe" : (searchText.hasPrefix("/") ? "magnifyingglass" : "command"))
+                Image(systemName: isActivityMonitorMode ? "cpu" : (isWebSearchMode ? "globe" : (searchText.hasPrefix("/") ? "magnifyingglass" : "command")))
                     .font(.system(size: 22, weight: .light))
                     .foregroundColor(Theme.searchIconColor)
                     .padding(.leading, 4)
 
-                TextField(isWebSearchMode ? "Search the web..." : "Search file, folder or command...", text: $searchText)
+                TextField(isActivityMonitorMode ? "Search processes..." : (isWebSearchMode ? "Search the web..." : "Search file, folder or command..."), text: $searchText)
                     .textFieldStyle(.plain)
                     .font(.system(size: 22, weight: .light))
                     .focused($isSearchFieldFocused)
                     .onChange(of: searchText) { newValue in
+                        if isActivityMonitorMode {
+                            selectedIndex = 0
+                            updateWindowSize()
+                            return
+                        }
+
                         searchDebounceItem?.cancel()
 
                         if activeWebURL != nil {
@@ -127,7 +136,10 @@ struct ContentView: View {
             .background(Theme.windowBackground)
 
             // Results Area & Dashboard Empty State
-            if isWebSearchMode {
+            if isActivityMonitorMode {
+                Divider()
+                activityMonitorView
+            } else if isWebSearchMode {
                 if let webURL = activeWebURL {
                     Divider()
                     WebView(url: webURL)
@@ -245,6 +257,7 @@ struct ContentView: View {
         .onChange(of: processService.systemStats) { _ in updateWindowSize() }
         .onChange(of: activeWebURL) { _ in updateWindowSize() }
         .onChange(of: isWebSearchMode) { _ in updateWindowSize() }
+        .onChange(of: isActivityMonitorMode) { _ in updateWindowSize() }
     }
 
     // MARK: - Sub-views
@@ -398,7 +411,9 @@ struct ContentView: View {
             }
 
             let totalSelectable: Int
-            if isWebSearchMode {
+            if isActivityMonitorMode {
+                totalSelectable = filteredProcesses.count
+            } else if isWebSearchMode {
                 if activeWebURL != nil {
                     totalSelectable = 0
                 } else if searchText.isEmpty {
@@ -422,7 +437,12 @@ struct ContentView: View {
                 if selectedIndex > 0 { selectedIndex -= 1 }
                 return nil
             case 36: // ↵ Enter
-                if isWebSearchMode {
+                if isActivityMonitorMode {
+                    let procs = filteredProcesses
+                    if selectedIndex < procs.count {
+                        confirmKillProcess(procs[selectedIndex], force: false)
+                    }
+                } else if isWebSearchMode {
                     if let url = WebService.shared.searchURL(for: searchText) {
                         activeWebURL = url
                     }
@@ -441,7 +461,11 @@ struct ContentView: View {
                 }
                 return nil
             case 53: // Esc
-                if isWebSearchMode {
+                if isActivityMonitorMode {
+                    isActivityMonitorMode = false
+                    searchText = ""
+                    selectedIndex = 0
+                } else if isWebSearchMode {
                     if activeWebURL != nil {
                         activeWebURL = nil
                         selectedIndex = 0
@@ -490,12 +514,221 @@ struct ContentView: View {
     }
 
     private func openActivityMonitor() {
-        if let url = NSWorkspace.shared.urlForApplication(withBundleIdentifier: "com.apple.ActivityMonitor") {
-            NSWorkspace.shared.open(url)
-        } else {
-            NSWorkspace.shared.open(URL(fileURLWithPath: "/System/Applications/Utilities/Activity Monitor.app"))
+        isActivityMonitorMode = true
+        searchText = ""
+        selectedIndex = 0
+    }
+
+    private func confirmKillProcess(_ proc: ProcessInfo, force: Bool) {
+        let alert = NSAlert()
+        alert.messageText = force ? "Force Quit Process?" : "Quit Process?"
+        alert.informativeText = force ? 
+            "Are you sure you want to force quit '\(proc.name)' (PID: \(proc.pid))? Any unsaved changes will be lost." : 
+            "Are you sure you want to quit '\(proc.name)' (PID: \(proc.pid))?"
+        alert.alertStyle = .warning
+        alert.addButton(withTitle: force ? "Force Quit" : "Quit")
+        alert.addButton(withTitle: "Cancel")
+        
+        if alert.runModal() == .alertFirstButtonReturn {
+            let success = KillProcess(proc.pid, force ? 1 : 0) == 1
+            if success {
+                // Immediately refresh stats to update list
+                processService.fetchSystemStats()
+            } else {
+                let failAlert = NSAlert()
+                failAlert.messageText = "Failed to Terminate Process"
+                failAlert.informativeText = "Could not terminate process '\(proc.name)' (PID: \(proc.pid)). You might not have permission."
+                failAlert.alertStyle = .critical
+                failAlert.addButton(withTitle: "OK")
+                failAlert.runModal()
+            }
         }
-        NSApp.hide(nil)
+    }
+
+    @ViewBuilder
+    private var activityMonitorView: some View {
+        VStack(spacing: 0) {
+            // Sort by CPU or Memory
+            HStack {
+                Text("SORT BY:")
+                    .font(.system(size: 10, weight: .bold))
+                    .foregroundColor(Theme.textSecondary.opacity(0.8))
+                
+                Button(action: {
+                    processSortByCPU = true
+                    selectedIndex = 0
+                }) {
+                    Text("CPU %")
+                        .font(.system(size: 10, weight: .bold))
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 3)
+                        .background(processSortByCPU ? Theme.selectionBackground : Color.clear)
+                        .foregroundColor(processSortByCPU ? Theme.textPrimary : Theme.textSecondary)
+                        .cornerRadius(4)
+                }
+                .buttonStyle(.plain)
+                
+                Button(action: {
+                    processSortByCPU = false
+                    selectedIndex = 0
+                }) {
+                    Text("Memory")
+                        .font(.system(size: 10, weight: .bold))
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 3)
+                        .background(!processSortByCPU ? Theme.selectionBackground : Color.clear)
+                        .foregroundColor(!processSortByCPU ? Theme.textPrimary : Theme.textSecondary)
+                        .cornerRadius(4)
+                }
+                .buttonStyle(.plain)
+                
+                Spacer()
+                
+                Button(action: {
+                    isActivityMonitorMode = false
+                    searchText = ""
+                    selectedIndex = 0
+                }) {
+                    Text("Back")
+                        .font(.system(size: 10, weight: .bold))
+                        .foregroundColor(.red.opacity(0.8))
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 3)
+                        .background(Theme.hoverBackground)
+                        .cornerRadius(4)
+                }
+                .buttonStyle(.plain)
+            }
+            .padding(.horizontal, 16)
+            .padding(.vertical, 8)
+            .background(Theme.windowBackground.opacity(0.5))
+            
+            Divider()
+            
+            let procs = filteredProcesses
+            if procs.isEmpty {
+                HStack {
+                    Spacer()
+                    Text("No processes found")
+                        .font(.system(size: 13))
+                        .foregroundColor(Theme.textSecondary)
+                        .padding()
+                    Spacer()
+                }
+                .frame(height: 140)
+            } else {
+                ScrollView {
+                    LazyVStack(spacing: Theme.rowSpacing) {
+                        ForEach(Array(procs.enumerated()), id: \.element.pid) { idx, proc in
+                            ProcessRow(proc: proc, isCPU: processSortByCPU, isSelected: selectedIndex == idx)
+                                .onTapGesture {
+                                    selectedIndex = idx
+                                }
+                                .contextMenu {
+                                    Button("Kill") {
+                                        confirmKillProcess(proc, force: false)
+                                    }
+                                    Button("Force Kill") {
+                                        confirmKillProcess(proc, force: true)
+                                    }
+                                }
+                        }
+                    }
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 8)
+                }
+                .frame(maxHeight: 280)
+                .scrollIndicators(.hidden)
+            }
+        }
+        .transition(.opacity)
+    }
+
+    private var filteredProcesses: [ProcessInfo] {
+        guard let stats = processService.systemStats else { return [] }
+        var seenPids = Set<Int32>()
+        var mergedProcs: [ProcessInfo] = []
+        
+        let primaryList = processSortByCPU ? stats.topCPUProcs : stats.topMemoryProcs
+        let secondaryList = processSortByCPU ? stats.topMemoryProcs : stats.topCPUProcs
+        
+        for proc in primaryList {
+            if !seenPids.contains(proc.pid) {
+                seenPids.insert(proc.pid)
+                mergedProcs.append(proc)
+            }
+        }
+        for proc in secondaryList {
+            if !seenPids.contains(proc.pid) {
+                seenPids.insert(proc.pid)
+                mergedProcs.append(proc)
+            }
+        }
+        
+        if !searchText.isEmpty {
+            let query = searchText.lowercased()
+            mergedProcs = mergedProcs.filter { $0.name.lowercased().contains(query) }
+        }
+        
+        if processSortByCPU {
+            mergedProcs.sort { $0.cpu > $1.cpu }
+        } else {
+            mergedProcs.sort { $0.memory > $1.memory }
+        }
+        
+        return Array(mergedProcs.prefix(7))
+    }
+}
+
+struct ProcessRow: View {
+    let proc: ProcessInfo
+    let isCPU: Bool
+    let isSelected: Bool
+    @State private var isHovered = false
+    
+    var body: some View {
+        HStack(spacing: 12) {
+            Image(systemName: "cpu")
+                .font(.system(size: 12))
+                .foregroundColor(isSelected ? Theme.textSelected.opacity(0.8) : Theme.textSecondary)
+            
+            VStack(alignment: .leading, spacing: 1) {
+                Text(proc.name)
+                    .font(.system(size: 13, weight: isSelected ? .semibold : .regular))
+                    .foregroundColor(isSelected ? Theme.textSelected : Theme.textPrimary)
+                    .lineLimit(1)
+                Text("PID: \(proc.pid)")
+                    .font(.system(size: 9))
+                    .foregroundColor(isSelected ? Theme.textSelected.opacity(0.7) : Theme.textSecondary)
+            }
+            
+            Spacer()
+            
+            if isCPU {
+                Text(String(format: "%.1f%% CPU", proc.cpu))
+                    .font(.system(size: 12, weight: .semibold))
+                    .foregroundColor(isSelected ? Theme.textSelected : Theme.textPrimary)
+            } else {
+                Text(formatMemory(proc.memory))
+                    .font(.system(size: 12, weight: .semibold))
+                    .foregroundColor(isSelected ? Theme.textSelected : Theme.textPrimary)
+            }
+        }
+        .padding(.vertical, 6)
+        .padding(.horizontal, 10)
+        .background(
+            RoundedRectangle(cornerRadius: 6)
+                .fill(isSelected ? Theme.selectionBackground : (isHovered ? Theme.hoverBackground : Color.clear))
+        )
+        .onHover { isHovered = $0 }
+        .contentShape(Rectangle())
+    }
+    
+    private func formatMemory(_ bytes: UInt64) -> String {
+        let formatter = ByteCountFormatter()
+        formatter.allowedUnits = [.useAll]
+        formatter.countStyle = .memory
+        return formatter.string(fromByteCount: Int64(bytes))
     }
 }
 
