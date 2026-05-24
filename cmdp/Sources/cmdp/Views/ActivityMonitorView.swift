@@ -18,20 +18,6 @@ struct ActivityMonitorView: View {
                     .foregroundColor(Theme.textSecondary.opacity(0.8))
                 
                 Button(action: {
-                    processSortByCPU = true
-                    selectedIndex = 0
-                }) {
-                    Text("CPU %")
-                        .font(.system(size: 10, weight: .bold))
-                        .padding(.horizontal, 8)
-                        .padding(.vertical, 3)
-                        .background(processSortByCPU ? Theme.selectionBackground : Color.clear)
-                        .foregroundColor(processSortByCPU ? Theme.textPrimary : Theme.textSecondary)
-                        .cornerRadius(4)
-                }
-                .buttonStyle(.plain)
-                
-                Button(action: {
                     processSortByCPU = false
                     selectedIndex = 0
                 }) {
@@ -41,6 +27,20 @@ struct ActivityMonitorView: View {
                         .padding(.vertical, 3)
                         .background(!processSortByCPU ? Theme.selectionBackground : Color.clear)
                         .foregroundColor(!processSortByCPU ? Theme.textPrimary : Theme.textSecondary)
+                        .cornerRadius(4)
+                }
+                .buttonStyle(.plain)
+
+                Button(action: {
+                    processSortByCPU = true
+                    selectedIndex = 0
+                }) {
+                    Text("CPU")
+                        .font(.system(size: 10, weight: .bold))
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 3)
+                        .background(processSortByCPU ? Theme.selectionBackground : Color.clear)
+                        .foregroundColor(processSortByCPU ? Theme.textPrimary : Theme.textSecondary)
                         .cornerRadius(4)
                 }
                 .buttonStyle(.plain)
@@ -93,6 +93,12 @@ struct ActivityMonitorView: View {
                                     Button("Force Kill") {
                                         onKill(proc, true)
                                     }
+                                    Divider()
+                                    Button("Copy PID") {
+                                        let pasteboard = NSPasteboard.general
+                                        pasteboard.clearContents()
+                                        pasteboard.setString(String(proc.pid), forType: .string)
+                                    }
                                 }
                         }
                     }
@@ -132,7 +138,7 @@ struct ProcessRow: View {
             Spacer()
             
             if isCPU {
-                Text(String(format: "%.1f%% CPU", proc.cpu))
+                Text(String(format: "%.1f CPU", proc.cpu))
                     .font(.system(size: 12, weight: .semibold))
                     .foregroundColor(isSelected ? Theme.textSelected : Theme.textPrimary)
             } else {

@@ -37,7 +37,7 @@ struct ContentView: View {
     @State private var activeWebURL: URL? = nil
     @State private var isWebSearchMode: Bool = false
     @State private var isActivityMonitorMode: Bool = false
-    @State private var processSortByCPU: Bool = true
+    @State private var processSortByCPU: Bool = false
     @FocusState private var isSearchFieldFocused: Bool
     @State private var searchDebounceItem: DispatchWorkItem?
 
