@@ -130,7 +130,7 @@ struct ProcessRow: View {
                     .font(.system(size: 13, weight: isSelected ? .semibold : .regular))
                     .foregroundColor(isSelected ? Theme.textSelected : Theme.textPrimary)
                     .lineLimit(1)
-                Text("PID: \(proc.pid)")
+                Text("PID: \(String(proc.pid))")
                     .font(.system(size: 9))
                     .foregroundColor(isSelected ? Theme.textSelected.opacity(0.7) : Theme.textSecondary)
             }
@@ -138,7 +138,7 @@ struct ProcessRow: View {
             Spacer()
             
             if isCPU {
-                Text(String(format: "%.1f CPU", proc.cpu))
+                Text(String(format: "%.1f%%", proc.cpu))
                     .font(.system(size: 12, weight: .semibold))
                     .foregroundColor(isSelected ? Theme.textSelected : Theme.textPrimary)
             } else {

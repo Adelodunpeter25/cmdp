@@ -149,6 +149,29 @@ struct ContentView: View {
                     }
                 )
             } else if isWebSearchMode {
+                Divider()
+                HStack {
+                    Spacer()
+                    Button(action: {
+                        activeWebURL = nil
+                        isWebSearchMode = false
+                        searchText = ""
+                        selectedIndex = 0
+                    }) {
+                        Text("Back")
+                            .font(.system(size: 10, weight: .bold))
+                            .foregroundColor(.red.opacity(0.8))
+                            .padding(.horizontal, 8)
+                            .padding(.vertical, 3)
+                            .background(Theme.hoverBackground)
+                            .cornerRadius(4)
+                    }
+                    .buttonStyle(.plain)
+                }
+                .padding(.horizontal, 16)
+                .padding(.vertical, 8)
+                .background(Theme.windowBackground.opacity(0.5))
+
                 if let webURL = activeWebURL {
                     Divider()
                     WebView(url: webURL)
@@ -532,8 +555,8 @@ struct ContentView: View {
         let alert = NSAlert()
         alert.messageText = force ? "Force Quit Process?" : "Quit Process?"
         alert.informativeText = force ? 
-            "Are you sure you want to force quit '\(proc.name)' (PID: \(proc.pid))? Any unsaved changes will be lost." : 
-            "Are you sure you want to quit '\(proc.name)' (PID: \(proc.pid))?"
+            "Are you sure you want to force quit '\(proc.name)' (PID: \(String(proc.pid)))? Any unsaved changes will be lost." : 
+            "Are you sure you want to quit '\(proc.name)' (PID: \(String(proc.pid)))?"
         alert.alertStyle = .warning
         alert.addButton(withTitle: force ? "Force Quit" : "Quit")
         alert.addButton(withTitle: "Cancel")
@@ -546,7 +569,7 @@ struct ContentView: View {
             } else {
                 let failAlert = NSAlert()
                 failAlert.messageText = "Failed to Terminate Process"
-                failAlert.informativeText = "Could not terminate process '\(proc.name)' (PID: \(proc.pid)). You might not have permission."
+                failAlert.informativeText = "Could not terminate process '\(proc.name)' (PID: \(String(proc.pid))). You might not have permission."
                 failAlert.alertStyle = .critical
                 failAlert.addButton(withTitle: "OK")
                 failAlert.runModal()
