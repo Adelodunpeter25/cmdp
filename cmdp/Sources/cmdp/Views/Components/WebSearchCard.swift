@@ -18,6 +18,16 @@ struct WebSearchCard: View {
                 .foregroundColor(isSelected ? Theme.textSelected : Theme.textPrimary)
             
             Spacer()
+
+            Text("Command")
+                .font(.system(size: 10, weight: .medium))
+                .foregroundColor(isSelected ? Theme.textSelected.opacity(0.7) : Theme.textSecondary.opacity(0.8))
+                .padding(.horizontal, 6)
+                .padding(.vertical, 2)
+                .background(
+                    RoundedRectangle(cornerRadius: 4)
+                        .fill(isSelected ? Color.white.opacity(0.15) : Theme.hoverBackground)
+                )
         }
         .padding(.vertical, Theme.rowPaddingVertical)
         .padding(.horizontal, Theme.rowPaddingHorizontal)
