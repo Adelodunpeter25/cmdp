@@ -4,9 +4,12 @@ import CLibSearch
 class SearchService: ObservableObject {
     @Published var results: [SearchResult] = []
     
+    // Thread-safe atomic counter for deduplication
+    private var searchCounter: Int = 0
+    private let counterLock = NSLock()
+    
+    // Separate search queue to handle blocking C API calls
     private let searchQueue = DispatchQueue(label: "cmdp.search.queue", qos: .userInitiated)
-    private let stateQueue = DispatchQueue(label: "cmdp.search.state")
-    private var searchRevision: Int = 0
     
     init() {
         // Initialize the Go Engine
@@ -25,21 +28,23 @@ class SearchService: ObservableObject {
             return
         }
 
-        let revision = stateQueue.sync {
-            searchRevision += 1
-            return searchRevision
-        }
-
+        // Get unique counter value
+        counterLock.lock()
+        let counter = searchCounter
+        counterLock.unlock()
+        
+        // Perform search on background queue
         searchQueue.async { [weak self] in
             guard let self else { return }
 
             let searchResults = self.performSearch(query: query)
 
-            let shouldPublish = self.stateQueue.sync {
-                revision == self.searchRevision
-            }
-
-            guard shouldPublish else { return }
+            // Check if this result is still the latest
+            counterLock.lock()
+            let isValid = counter == self.searchCounter
+            counterLock.unlock()
+            
+            guard isValid else { return }
 
             DispatchQueue.main.async {
                 self.results = searchResults
@@ -48,6 +53,10 @@ class SearchService: ObservableObject {
     }
     
     func resetIndex() {
+        // Reset counter to invalidate any pending searches
+        counterLock.lock()
+        searchCounter = 0
+        counterLock.unlock()
         ResetIndex()
     }
 

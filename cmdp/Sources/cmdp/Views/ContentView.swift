@@ -40,6 +40,7 @@ struct ContentView: View {
     @State private var processSortByCPU: Bool = false
     @FocusState private var isSearchFieldFocused: Bool
     @State private var searchDebounceItem: DispatchWorkItem?
+    @State private var loadedWebURL: URL?
 
     // MARK: Computed display list
 
@@ -100,6 +101,7 @@ struct ContentView: View {
                         searchDebounceItem?.cancel()
 
                         if activeWebURL != nil {
+                            loadedWebURL = nil
                             activeWebURL = nil
                         }
 
@@ -154,6 +156,12 @@ struct ContentView: View {
                     WebView(url: webURL)
                         .frame(height: 400)
                         .transition(.opacity)
+                        .onChange(of: activeWebURL) { _ in
+                            // When URL changes, update loaded flag
+                            if let url = activeWebURL {
+                                loadedWebURL = url
+                            }
+                        }
                 } else if !searchText.isEmpty {
                     Divider()
                     VStack(spacing: 0) {
@@ -476,12 +484,14 @@ struct ContentView: View {
                     selectedIndex = 0
                 } else if isWebSearchMode {
                     if activeWebURL != nil {
+                        loadedWebURL = nil
                         activeWebURL = nil
                         selectedIndex = 0
                     } else {
                         isWebSearchMode = false
                         searchText = ""
                         selectedIndex = 0
+                        loadedWebURL = nil
                     }
                 } else {
                     searchText.isEmpty ? NSApp.hide(nil) : clearSearch()
