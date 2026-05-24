@@ -149,29 +149,6 @@ struct ContentView: View {
                     }
                 )
             } else if isWebSearchMode {
-                Divider()
-                HStack {
-                    Spacer()
-                    Button(action: {
-                        activeWebURL = nil
-                        isWebSearchMode = false
-                        searchText = ""
-                        selectedIndex = 0
-                    }) {
-                        Text("Back")
-                            .font(.system(size: 10, weight: .bold))
-                            .foregroundColor(.red.opacity(0.8))
-                            .padding(.horizontal, 8)
-                            .padding(.vertical, 3)
-                            .background(Theme.hoverBackground)
-                            .cornerRadius(4)
-                    }
-                    .buttonStyle(.plain)
-                }
-                .padding(.horizontal, 16)
-                .padding(.vertical, 8)
-                .background(Theme.windowBackground.opacity(0.5))
-
                 if let webURL = activeWebURL {
                     Divider()
                     WebView(url: webURL)
