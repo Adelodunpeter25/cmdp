@@ -202,7 +202,7 @@ func TestSearchFiles(t *testing.T) {
 		t.Errorf("expected 'index.go' first, got %q", results[0].Item.Name)
 	}
 
-	// 3. Capping check
+	// 3. No Capping check
 	manyItems := make([]indexer.IndexItem, 15)
 	for i := 0; i < 15; i++ {
 		manyItems[i] = indexer.IndexItem{
@@ -212,8 +212,8 @@ func TestSearchFiles(t *testing.T) {
 		}
 	}
 	cappedResults := Files("test_file", manyItems)
-	if len(cappedResults) != 10 {
-		t.Errorf("expected exactly 10 results due to file capping, got %d", len(cappedResults))
+	if len(cappedResults) != 15 {
+		t.Errorf("expected all 15 results due to no file capping, got %d", len(cappedResults))
 	}
 }
 

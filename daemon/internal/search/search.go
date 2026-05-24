@@ -24,13 +24,7 @@ const (
 	scoreWordPrefix = 3_000
 )
 
-// Per-group result caps — limits the number of items sent back over the CGo
-// bridge so Swift doesn't decode/layout hundreds of irrelevant results.
-const (
-	maxAppResults     = 8
-	maxFolderResults  = 5
-	maxCommandResults = 5
-)
+
 
 // acronym returns the string formed by the first letter of each word in s.
 // e.g. "Google Chrome" → "gc", "Visual Studio Code" → "vsc"
@@ -134,33 +128,10 @@ func Items(query string, items []indexer.IndexItem) []Result {
 		return strings.ToLower(results[i].Item.Name) < strings.ToLower(results[j].Item.Name)
 	})
 
-	// Apply per-group caps: return at most maxAppResults apps,
-	// maxFolderResults folders, and maxCommandResults commands
-	// (all already in score-descending order).
-	// Use make() — a nil slice marshals to JSON null; an empty slice marshals to [].
-	capped := make([]Result, 0, maxAppResults+maxFolderResults+maxCommandResults)
-	appCount, folderCount, commandCount := 0, 0, 0
-	for _, r := range results {
-		switch r.Item.Type {
-		case indexer.TypeApp:
-			if appCount < maxAppResults {
-				capped = append(capped, r)
-				appCount++
-			}
-		case indexer.TypeFolder:
-			if folderCount < maxFolderResults {
-				capped = append(capped, r)
-				folderCount++
-			}
-		case indexer.TypeCommand:
-			if commandCount < maxCommandResults {
-				capped = append(capped, r)
-				commandCount++
-			}
-		}
+	if len(results) == 0 {
+		return []Result{}
 	}
-
-	return capped
+	return results
 }
 
 // Files matches a query against a slice of file IndexItems and returns ranked results.
@@ -200,10 +171,6 @@ func Files(query string, items []indexer.IndexItem) []Result {
 			return results[i].Score > results[j].Score
 		})
 
-		// Cap at 15 results for glob files
-		if len(results) > 15 {
-			results = results[:15]
-		}
 		return results
 	}
 
@@ -232,12 +199,5 @@ func Files(query string, items []indexer.IndexItem) []Result {
 		return strings.ToLower(results[i].Item.Name) < strings.ToLower(results[j].Item.Name)
 	})
 
-	// Cap at 10 results for files
-	const maxFileResults = 10
-	if len(results) > maxFileResults {
-		results = results[:maxFileResults]
-	}
-
 	return results
 }
-
