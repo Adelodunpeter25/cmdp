@@ -411,16 +411,27 @@ struct ContentView: View {
     }
 
     func executeSelection(_ result: SearchResult) {
-        if result.Item.itemType == .command {
-            executeCommand(result.Item.Path)
-        } else if result.Item.itemType == .app {
-            // Apps launch/open
-            NSWorkspace.shared.open(URL(fileURLWithPath: result.Item.Path))
-        } else {
-            // Folders and Files reveal in Finder (selects the item in its parent directory)
-            NSWorkspace.shared.activateFileViewerSelecting([URL(fileURLWithPath: result.Item.Path)])
-        }
+        // Hide the app immediately so the UI doesn't hang on screen
         NSApp.hide(nil)
+
+        let path = result.Item.Path
+        let url = URL(fileURLWithPath: path)
+
+        if result.Item.itemType == .command {
+            executeCommand(path)
+        } else if result.Item.itemType == .app {
+            // Launch the application asynchronously to prevent main-thread freezing
+            NSWorkspace.shared.open(url, configuration: NSWorkspace.OpenConfiguration()) { _, error in
+                if let error = error {
+                    print("ContentView: Failed to open app asynchronously: \(error)")
+                }
+            }
+        } else {
+            // Reveal folders and files in Finder on a background queue to keep main-thread responsive
+            DispatchQueue.global(qos: .userInitiated).async {
+                NSWorkspace.shared.activateFileViewerSelecting([url])
+            }
+        }
     }
 
     private func executeCommand(_ commandId: String) {
