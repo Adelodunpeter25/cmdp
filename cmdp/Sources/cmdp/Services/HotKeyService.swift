@@ -16,14 +16,8 @@ class HotKeyService {
         spaceHotKey.keyDownHandler = { [weak self] in
             self?.toggleWindow()
         }
-        
-        // Register Cmd + P
-        let pHotKey = HotKey(key: .p, modifiers: [.command])
-        pHotKey.keyDownHandler = { [weak self] in
-            self?.toggleWindow()
-        }
 
-        hotKeys = [spaceHotKey, pHotKey]
+        hotKeys = [spaceHotKey]
     }
 
     func toggleWindow() {
