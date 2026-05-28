@@ -233,8 +233,8 @@ struct ContentView: View {
             }
         }
 
-        // Prioritize Applications, followed by Commands, then Folders
-        return apps + commands + folders
+        // Prioritize Applications, followed by Folders, then Commands
+        return apps + folders + commands
     }
 
 
