@@ -2,7 +2,7 @@
 
 ## Workflow Mandates
 - **Always Commit:** After every successful modification, commit the changes with a clear and concise message.
-- **Always Build:** After any change to the codebase (frontend or backend), you MUST rebuild both components to ensure system integrity.
+- **Always Build:** Build the modified component (rebuild the Go backend when Go files change, and rebuild the Swift app when Swift files change). Do not rebuild the Go backend if only Swift files were changed.
 
 ## Build Procedures
 
