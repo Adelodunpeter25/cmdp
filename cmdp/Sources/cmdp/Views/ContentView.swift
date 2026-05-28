@@ -233,20 +233,8 @@ struct ContentView: View {
             }
         }
 
-        // Put the group with the higher top score first.
-        let appTop     = apps.first?.Score     ?? Int.min
-        let folderTop  = folders.first?.Score  ?? Int.min
-        let commandTop = commands.first?.Score ?? Int.min
-
-        var groups = [
-            (type: ItemType.app, items: apps, topScore: appTop),
-            (type: ItemType.folder, items: folders, topScore: folderTop),
-            (type: ItemType.command, items: commands, topScore: commandTop)
-        ]
-
-        groups.sort { $0.topScore > $1.topScore }
-
-        return groups.flatMap { $0.items }
+        // Prioritize Applications, followed by Commands, then Folders
+        return apps + commands + folders
     }
 
 
