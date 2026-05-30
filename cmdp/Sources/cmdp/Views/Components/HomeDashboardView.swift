@@ -7,8 +7,6 @@ struct HomeDashboardView: View {
     @Binding var isShelfMode: Bool
     @Binding var isClipboardMode: Bool
     @Binding var searchText: String
-    @Binding var processSortByCPU: Bool
-    @ObservedObject var processService: ProcessService
     let onOpenActivityMonitor: () -> Void
 
     var body: some View {
@@ -61,33 +59,20 @@ struct HomeDashboardView: View {
             .padding(.horizontal, 8)
             .padding(.top, 8)
 
-            if let stats = processService.systemStats {
-                HStack(spacing: 12) {
-                    CPUProcessCard(stats: stats) {
-                        processSortByCPU = true
-                        onOpenActivityMonitor()
-                    }
-                    MemoryProcessCard(stats: stats) {
-                        processSortByCPU = false
-                        onOpenActivityMonitor()
-                    }
-                }
-                .padding(.horizontal, 12)
-                .padding(.vertical, 8)
-                .transition(.opacity)
-            } else {
-                HStack {
-                    Spacer()
-                    ProgressView()
-                        .scaleEffect(0.8)
-                        .padding()
-                    Text("Loading system stats...")
-                        .font(.system(size: 12))
-                        .foregroundColor(Theme.textSecondary)
-                    Spacer()
-                }
-                .frame(height: 140)
+            DashboardCommandRow(
+                iconName: "cpu",
+                title: "Open Activity Monitor",
+                iconColor: .purple,
+                isSelected: selectedIndex == 3,
+                isHovered: hoveredIndex == 3
+            )
+            .onHover { hoveredIndex = $0 ? 3 : nil }
+            .onTapGesture {
+                onOpenActivityMonitor()
             }
+            .padding(.horizontal, 8)
+            .padding(.top, 8)
+            .padding(.bottom, 8)
         }
     }
 }

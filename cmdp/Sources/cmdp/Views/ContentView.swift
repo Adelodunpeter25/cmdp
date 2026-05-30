@@ -202,8 +202,6 @@ struct ContentView: View {
                         isShelfMode: $isShelfMode,
                         isClipboardMode: $isClipboardMode,
                         searchText: $searchText,
-                        processSortByCPU: $processSortByCPU,
-                        processService: processService,
                         onOpenActivityMonitor: {
                             openActivityMonitor()
                         }
@@ -211,7 +209,7 @@ struct ContentView: View {
                 }
             }
         }
-        .frame(width: 600)
+        .frame(width: 650)
         .background(VisualEffectView(material: .hudWindow, blendingMode: .behindWindow))
         .clipShape(RoundedRectangle(cornerRadius: Theme.windowCornerRadius))
         .onAppear {
@@ -387,7 +385,7 @@ struct ContentView: View {
                 totalSelectable = 0
             } else {
                 if searchText.isEmpty {
-                    totalSelectable = 3
+                    totalSelectable = 4
                 } else {
                     totalSelectable = groupedResults.count
                 }
@@ -428,6 +426,8 @@ struct ContentView: View {
                             isClipboardMode = true
                             searchText = ""
                             selectedIndex = 0
+                        } else if selectedIndex == 3 {
+                            openActivityMonitor()
                         }
                     } else {
                         if selectedIndex < groupedResults.count {
