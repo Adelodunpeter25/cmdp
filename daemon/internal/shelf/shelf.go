@@ -80,11 +80,11 @@ func (m *Manager) Add(originalPath string) (*ShelfItem, error) {
 func (m *Manager) GetItems() ([]ShelfItem, error) {
 	rows, err := m.db.Conn().Query("SELECT id, original_path, shelf_path, name, created_at FROM shelf_items ORDER BY created_at DESC")
 	if err != nil {
-		return nil, err
+		return []ShelfItem{}, err
 	}
 	defer rows.Close()
 
-	var items []ShelfItem
+	items := []ShelfItem{}
 	for rows.Next() {
 		var item ShelfItem
 		if err := rows.Scan(&item.ID, &item.OriginalPath, &item.ShelfPath, &item.Name, &item.CreatedAt); err != nil {
