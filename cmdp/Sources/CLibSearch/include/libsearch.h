@@ -104,6 +104,11 @@ extern char* GetSystemStats(void);
 // Kill a process by pid with a force flag. Returns 1 on success, 0 on failure.
 extern int KillProcess(int pid, int force);
 
+// Shelf functions
+extern char* AddToShelf(char* originalPath);
+extern char* GetShelfItems(void);
+extern int RemoveFromShelf(char* id);
+
 #ifdef __cplusplus
 }
 #endif

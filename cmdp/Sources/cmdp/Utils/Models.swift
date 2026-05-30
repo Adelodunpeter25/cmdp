@@ -42,3 +42,20 @@ struct SystemStats: Codable, Equatable {
     let topMemoryProcs: [ProcessInfo]
     let topCPUProcs: [ProcessInfo]
 }
+
+struct ShelfItem: Codable, Identifiable, Equatable {
+    let id: String
+    let originalPath: String
+    let shelfPath: String
+    let name: String
+    let createdAt: Int64
+    
+    enum CodingKeys: String, CodingKey {
+        case id
+        case originalPath = "original_path"
+        case shelfPath = "shelf_path"
+        case name
+        case createdAt = "created_at"
+    }
+}
+

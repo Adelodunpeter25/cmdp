@@ -38,6 +38,13 @@ func OpenDB(path string) (*DB, error) {
 	CREATE TABLE IF NOT EXISTS directory_states (
 		path TEXT PRIMARY KEY,
 		last_modified_ns INTEGER
+	);
+	CREATE TABLE IF NOT EXISTS shelf_items (
+		id TEXT PRIMARY KEY,
+		original_path TEXT,
+		shelf_path TEXT,
+		name TEXT,
+		created_at INTEGER
 	);`
 
 	_, err = db.Exec(query)
@@ -47,6 +54,12 @@ func OpenDB(path string) (*DB, error) {
 
 	return &DB{conn: db}, nil
 }
+
+// Conn returns the raw database connection.
+func (db *DB) Conn() *sql.DB {
+	return db.conn
+}
+
 
 // SaveItems replaces the entire items table with the provided list in a single
 // atomic transaction.  This guarantees no stale entries (uninstalled apps,

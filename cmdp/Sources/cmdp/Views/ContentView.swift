@@ -107,6 +107,45 @@ struct ContentView: View {
                     .padding(.horizontal, 8)
                     .padding(.vertical, 8)
                     .transition(.opacity)
+                } else {
+                    Divider()
+                    VStack(spacing: 16) {
+                        Spacer()
+                        Image(systemName: "globe")
+                            .font(.system(size: 32))
+                            .foregroundColor(Theme.textSecondary.opacity(0.6))
+                        
+                        Text("Web Search Mode")
+                            .font(.system(size: 14, weight: .medium))
+                            .foregroundColor(Theme.textSecondary)
+                        
+                        Button(action: {
+                            ShelfWindowManager.shared.openShelfWindow()
+                        }) {
+                            HStack {
+                                Image(systemName: "square.and.arrow.down.on.square")
+                                Text("Open Shelf")
+                            }
+                            .font(.system(size: 13, weight: .medium))
+                            .foregroundColor(Theme.textSelected)
+                            .padding(.vertical, 8)
+                            .padding(.horizontal, 16)
+                            .background(Theme.selectionBackground)
+                            .cornerRadius(6)
+                        }
+                        .buttonStyle(PlainButtonStyle())
+                        .onHover { hovered in
+                            if hovered {
+                                NSCursor.pointingHand.push()
+                            } else {
+                                NSCursor.pop()
+                            }
+                        }
+                        
+                        Spacer()
+                    }
+                    .frame(height: 200)
+                    .frame(maxWidth: .infinity)
                 }
             } else {
                 if !searchText.isEmpty && !groupedResults.isEmpty {

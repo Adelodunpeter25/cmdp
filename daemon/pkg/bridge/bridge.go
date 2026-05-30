@@ -12,12 +12,14 @@ import (
 	"github.com/Adelodunpeter25/cmdp/daemon/internal/indexer"
 	"github.com/Adelodunpeter25/cmdp/daemon/internal/ps"
 	"github.com/Adelodunpeter25/cmdp/daemon/internal/search"
+	"github.com/Adelodunpeter25/cmdp/daemon/internal/shelf"
 	"github.com/Adelodunpeter25/cmdp/daemon/internal/utils"
 )
 
 var (
 	manager      *indexer.Manager
 	statsManager *ps.StatsManager
+	shelfManager *shelf.Manager
 	once         sync.Once
 )
 
@@ -49,6 +51,11 @@ func InitEngine() {
 		if err != nil {
 			log.Printf("Bridge: Failed to open DB: %v", err)
 			return
+		}
+
+		shelfManager, err = shelf.NewManager(db, homeDir)
+		if err != nil {
+			log.Printf("Bridge: Failed to initialize shelf manager: %v", err)
 		}
 
 		dirs := []string{
@@ -199,6 +206,59 @@ func KillProcess(pid C.int, force C.int) C.int {
 
 	if err := p.Signal(sig); err != nil {
 		log.Printf("Bridge: Failed to send signal %v to process %d: %v", sig, pid, err)
+		return 0
+	}
+	return 1
+}
+
+// AddToShelf copies a file to the shelf. Returns a JSON string of the added item or "{}" on failure.
+//export AddToShelf
+func AddToShelf(originalPath *C.char) *C.char {
+	if shelfManager == nil {
+		return C.CString("{}")
+	}
+	goPath := C.GoString(originalPath)
+	item, err := shelfManager.Add(goPath)
+	if err != nil {
+		log.Printf("Bridge: AddToShelf error: %v", err)
+		return C.CString("{}")
+	}
+
+	jsonData, err := json.Marshal(item)
+	if err != nil {
+		return C.CString("{}")
+	}
+	return C.CString(string(jsonData))
+}
+
+// GetShelfItems returns a JSON array string of all shelf items or "[]" on failure.
+//export GetShelfItems
+func GetShelfItems() *C.char {
+	if shelfManager == nil {
+		return C.CString("[]")
+	}
+	items, err := shelfManager.GetItems()
+	if err != nil {
+		log.Printf("Bridge: GetShelfItems error: %v", err)
+		return C.CString("[]")
+	}
+
+	jsonData, err := json.Marshal(items)
+	if err != nil {
+		return C.CString("[]")
+	}
+	return C.CString(string(jsonData))
+}
+
+// RemoveFromShelf removes an item from the shelf by ID. Returns 1 on success, 0 on failure.
+//export RemoveFromShelf
+func RemoveFromShelf(id *C.char) C.int {
+	if shelfManager == nil {
+		return 0
+	}
+	goID := C.GoString(id)
+	if err := shelfManager.Remove(goID); err != nil {
+		log.Printf("Bridge: RemoveFromShelf error: %v", err)
 		return 0
 	}
 	return 1
