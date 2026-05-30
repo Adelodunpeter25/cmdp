@@ -52,8 +52,8 @@ struct ShelfView: View {
                 }
             }
         }
-        .frame(width: 350, height: 500)
-        .background(VisualEffectView(material: .hudWindow, blendingMode: .behindWindow))
+        .frame(height: 350)
+        .frame(maxWidth: .infinity)
         .onDrop(of: ["public.file-url"], isTargeted: nil) { providers in
             // Handle drop
             for provider in providers {

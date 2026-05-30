@@ -13,6 +13,7 @@ struct ContentView: View {
     @State private var activeWebURL: URL? = nil
     @State private var isWebSearchMode: Bool = false
     @State private var isActivityMonitorMode: Bool = false
+    @State private var isShelfMode: Bool = false
     @State private var processSortByCPU: Bool = false
     @FocusState private var isSearchFieldFocused: Bool
     @State private var searchDebounceItem: DispatchWorkItem?
@@ -60,6 +61,7 @@ struct ContentView: View {
                 searchText: $searchText,
                 isActivityMonitorMode: isActivityMonitorMode,
                 isWebSearchMode: isWebSearchMode,
+                isShelfMode: isShelfMode,
                 isSearchFieldFocused: $isSearchFieldFocused,
                 onClear: { clearSearch() }
             )
@@ -120,7 +122,8 @@ struct ContentView: View {
                             .foregroundColor(Theme.textSecondary)
                         
                         Button(action: {
-                            ShelfWindowManager.shared.openShelfWindow()
+                            isShelfMode = true
+                            selectedIndex = 0
                         }) {
                             HStack {
                                 Image(systemName: "square.and.arrow.down.on.square")
@@ -147,6 +150,10 @@ struct ContentView: View {
                     .frame(height: 200)
                     .frame(maxWidth: .infinity)
                 }
+            } else if isShelfMode {
+                Divider()
+                ShelfView()
+                    .transition(.opacity)
             } else {
                 if !searchText.isEmpty && !groupedResults.isEmpty {
                     Divider()
@@ -186,6 +193,7 @@ struct ContentView: View {
                         selectedIndex: $selectedIndex,
                         hoveredIndex: $hoveredIndex,
                         isWebSearchMode: $isWebSearchMode,
+                        isShelfMode: $isShelfMode,
                         searchText: $searchText,
                         processSortByCPU: $processSortByCPU,
                         processService: processService,
@@ -249,6 +257,7 @@ struct ContentView: View {
         .onChange(of: processService.systemStats) { _ in updateWindowSize() }
         .onChange(of: activeWebURL) { _ in updateWindowSize() }
         .onChange(of: isWebSearchMode) { _ in updateWindowSize() }
+        .onChange(of: isShelfMode) { _ in updateWindowSize() }
         .onChange(of: isActivityMonitorMode) { _ in updateWindowSize() }
     }
 
@@ -364,9 +373,11 @@ struct ContentView: View {
                 } else {
                     totalSelectable = 1
                 }
+            } else if isShelfMode {
+                totalSelectable = 0
             } else {
                 if searchText.isEmpty {
-                    totalSelectable = 1
+                    totalSelectable = 2
                 } else {
                     totalSelectable = groupedResults.count
                 }
@@ -389,10 +400,16 @@ struct ContentView: View {
                     if let url = WebService.shared.searchURL(for: searchText) {
                         activeWebURL = url
                     }
+                } else if isShelfMode {
+                    // No action
                 } else {
                     if searchText.isEmpty {
                         if selectedIndex == 0 {
                             isWebSearchMode = true
+                            searchText = ""
+                            selectedIndex = 0
+                        } else if selectedIndex == 1 {
+                            isShelfMode = true
                             searchText = ""
                             selectedIndex = 0
                         }
@@ -419,6 +436,10 @@ struct ContentView: View {
                         selectedIndex = 0
                         loadedWebURL = nil
                     }
+                } else if isShelfMode {
+                    isShelfMode = false
+                    searchText = ""
+                    selectedIndex = 0
                 } else {
                     searchText.isEmpty ? NSApp.hide(nil) : clearSearch()
                 }
