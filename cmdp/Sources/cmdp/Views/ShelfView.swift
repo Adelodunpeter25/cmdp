@@ -50,6 +50,11 @@ struct ShelfView: View {
                     }
                     .padding()
                 }
+                .onHover { isHovering in
+                    if let window = NSApp.keyWindow {
+                        window.isMovableByWindowBackground = !isHovering
+                    }
+                }
             }
         }
         .frame(height: 350)
@@ -110,7 +115,7 @@ struct ShelfItemRow: View {
         .padding(.horizontal, 12)
         .background(
             RoundedRectangle(cornerRadius: Theme.rowCornerRadius)
-                .fill(isHovered ? Theme.hoverBackground : Color.clear)
+                .fill(isHovered ? Theme.hoverBackground : Color.black.opacity(0.001))
         )
         .contentShape(Rectangle())
         .onHover { isHovered = $0 }
