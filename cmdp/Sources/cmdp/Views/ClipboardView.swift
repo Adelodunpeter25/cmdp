@@ -3,6 +3,7 @@ import AppKit
 
 struct ClipboardView: View {
     @StateObject private var clipboardService = ClipboardService.shared
+    @State private var selectedItemId: String? = nil
     
     var body: some View {
         VStack(spacing: 0) {
@@ -26,7 +27,11 @@ struct ClipboardView: View {
                 ScrollView {
                     LazyVStack(spacing: 8) {
                         ForEach(clipboardService.items) { item in
-                            ClipboardItemRow(item: item)
+                            ClipboardItemRow(
+                                item: item,
+                                isSelected: selectedItemId == item.id,
+                                onSelect: { selectedItemId = item.id }
+                            )
                         }
                     }
                     .padding()
@@ -40,6 +45,8 @@ struct ClipboardView: View {
 
 struct ClipboardItemRow: View {
     let item: ClipboardItem
+    let isSelected: Bool
+    let onSelect: () -> Void
     @StateObject private var clipboardService = ClipboardService.shared
     @State private var isHovered = false
     
@@ -47,17 +54,17 @@ struct ClipboardItemRow: View {
         HStack(spacing: 12) {
             Image(systemName: "doc.text")
                 .font(.system(size: 16))
-                .foregroundColor(Theme.textSecondary)
+                .foregroundColor(isSelected ? Theme.textSelected : Theme.textSecondary)
             
             VStack(alignment: .leading, spacing: 2) {
                 Text(item.content.replacingOccurrences(of: "\n", with: " "))
                     .font(.system(size: 13, weight: .medium))
-                    .foregroundColor(Theme.textPrimary)
+                    .foregroundColor(isSelected ? Theme.textSelected : Theme.textPrimary)
                     .lineLimit(1)
                 
                 Text(formatTimestamp(item.createdAt))
                     .font(.system(size: 10))
-                    .foregroundColor(Theme.textSecondary)
+                    .foregroundColor(isSelected ? Theme.textSelected.opacity(0.7) : Theme.textSecondary)
             }
             
             Spacer()
@@ -67,7 +74,7 @@ struct ClipboardItemRow: View {
                     clipboardService.deleteItem(id: item.id)
                 }) {
                     Image(systemName: "xmark.circle.fill")
-                        .foregroundColor(.red.opacity(0.8))
+                        .foregroundColor(isSelected ? Theme.textSelected : .red.opacity(0.8))
                 }
                 .buttonStyle(PlainButtonStyle())
             }
@@ -76,14 +83,19 @@ struct ClipboardItemRow: View {
         .padding(.horizontal, 12)
         .background(
             RoundedRectangle(cornerRadius: Theme.rowCornerRadius)
-                .fill(isHovered ? Theme.hoverBackground : Color.black.opacity(0.001))
+                .fill(isSelected ? Theme.selectionBackground : (isHovered ? Theme.hoverBackground : Color.black.opacity(0.001)))
         )
         .contentShape(Rectangle())
         .onHover { isHovered = $0 }
-        .onTapGesture {
+        .onTapGesture(count: 2) {
             clipboardService.copyToClipboard(content: item.content)
             NSApp.hide(nil)
         }
+        .simultaneousGesture(
+            TapGesture(count: 1).onEnded {
+                onSelect()
+            }
+        )
     }
     
     private func formatTimestamp(_ timestamp: Int64) -> String {
@@ -94,3 +106,4 @@ struct ClipboardItemRow: View {
         return formatter.string(from: date)
     }
 }
+
