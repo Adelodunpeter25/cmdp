@@ -113,40 +113,19 @@ struct ContentView: View {
                     .transition(.opacity)
                 } else {
                     Divider()
-                    VStack(spacing: 16) {
+                    VStack(spacing: 12) {
                         Spacer()
                         Image(systemName: "globe")
                             .font(.system(size: 32))
-                            .foregroundColor(Theme.textSecondary.opacity(0.6))
+                            .foregroundColor(Theme.textSecondary.opacity(0.4))
                         
                         Text("Web Search Mode")
                             .font(.system(size: 14, weight: .medium))
                             .foregroundColor(Theme.textSecondary)
                         
-                        Button(action: {
-                            isShelfMode = true
-                            selectedIndex = 0
-                        }) {
-                            HStack {
-                                Image(systemName: "square.and.arrow.down.on.square")
-                                Text("Open Shelf")
-                            }
-                            .font(.system(size: 13, weight: .medium))
-                            .foregroundColor(Theme.textSelected)
-                            .padding(.vertical, 8)
-                            .padding(.horizontal, 16)
-                            .background(Theme.selectionBackground)
-                            .cornerRadius(6)
-                        }
-                        .buttonStyle(PlainButtonStyle())
-                        .onHover { hovered in
-                            if hovered {
-                                NSCursor.pointingHand.push()
-                            } else {
-                                NSCursor.pop()
-                            }
-                        }
-                        
+                        Text("Type a query above to search the web.")
+                            .font(.system(size: 11))
+                            .foregroundColor(Theme.textSecondary.opacity(0.7))
                         Spacer()
                     }
                     .frame(height: 200)

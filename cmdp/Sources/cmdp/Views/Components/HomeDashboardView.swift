@@ -101,6 +101,8 @@ struct HomeDashboardView: View {
                     }
                     .buttonStyle(PlainButtonStyle())
                     
+                    Spacer()
+                    
                     // Memory Pill
                     Button(action: {
                         processSortByCPU = false
@@ -128,9 +130,8 @@ struct HomeDashboardView: View {
                     Text("Loading system stats...")
                         .font(.system(size: 10))
                         .foregroundColor(Theme.textSecondary)
+                    Spacer()
                 }
-                
-                Spacer()
             }
             .padding(.horizontal, 12)
             .padding(.vertical, 6)
