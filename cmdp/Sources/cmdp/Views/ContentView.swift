@@ -209,7 +209,7 @@ struct ContentView: View {
                 }
             }
         }
-        .frame(width: 650)
+        .frame(width: 600)
         .background(VisualEffectView(material: .hudWindow, blendingMode: .behindWindow))
         .clipShape(RoundedRectangle(cornerRadius: Theme.windowCornerRadius))
         .onAppear {
