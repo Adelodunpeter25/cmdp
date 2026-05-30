@@ -6,24 +6,6 @@ struct ShelfView: View {
     
     var body: some View {
         VStack(spacing: 0) {
-            // Header
-            HStack {
-                Image(systemName: "square.and.arrow.down.on.square")
-                    .font(.system(size: 16))
-                    .foregroundColor(Theme.textSelected)
-                Text("File Shelf")
-                    .font(.system(size: 16, weight: .bold))
-                    .foregroundColor(Theme.textPrimary)
-                Spacer()
-                Text("\(shelfService.items.count) items")
-                    .font(.system(size: 12))
-                    .foregroundColor(Theme.textSecondary)
-            }
-            .padding()
-            .background(Color.black.opacity(0.1))
-            
-            Divider()
-            
             // Content
             if shelfService.items.isEmpty {
                 VStack(spacing: 12) {
