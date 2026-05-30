@@ -9,6 +9,7 @@ import (
 	"sync"
 	"syscall"
 
+	"github.com/Adelodunpeter25/cmdp/daemon/internal/clipboard"
 	"github.com/Adelodunpeter25/cmdp/daemon/internal/indexer"
 	"github.com/Adelodunpeter25/cmdp/daemon/internal/ps"
 	"github.com/Adelodunpeter25/cmdp/daemon/internal/search"
@@ -17,10 +18,11 @@ import (
 )
 
 var (
-	manager      *indexer.Manager
-	statsManager *ps.StatsManager
-	shelfManager *shelf.Manager
-	once         sync.Once
+	manager          *indexer.Manager
+	statsManager     *ps.StatsManager
+	shelfManager     *shelf.Manager
+	clipboardManager *clipboard.Manager
+	once             sync.Once
 )
 
 func increaseFdLimit() {
@@ -57,6 +59,8 @@ func InitEngine() {
 		if err != nil {
 			log.Printf("Bridge: Failed to initialize shelf manager: %v", err)
 		}
+
+		clipboardManager = clipboard.NewManager(db)
 
 		dirs := []string{
 			"/Applications",
@@ -262,6 +266,44 @@ func RemoveFromShelf(id *C.char) C.int {
 		return 0
 	}
 	return 1
+}
+
+// GetClipboardItems returns a JSON array string of all clipboard items or "[]" on failure.
+//export GetClipboardItems
+func GetClipboardItems() *C.char {
+	if clipboardManager == nil {
+		return C.CString("[]")
+	}
+	items := clipboardManager.GetItems()
+	jsonData, err := json.Marshal(items)
+	if err != nil {
+		return C.CString("[]")
+	}
+	return C.CString(string(jsonData))
+}
+
+// RemoveFromClipboard removes an item from the clipboard history by ID. Returns 1 on success, 0 on failure.
+//export RemoveFromClipboard
+func RemoveFromClipboard(id *C.char) C.int {
+	if clipboardManager == nil {
+		return 0
+	}
+	goID := C.GoString(id)
+	if err := clipboardManager.Delete(goID); err != nil {
+		log.Printf("Bridge: RemoveFromClipboard error: %v", err)
+		return 0
+	}
+	return 1
+}
+
+// SaveClipboardItem saves an item to the clipboard history.
+//export SaveClipboardItem
+func SaveClipboardItem(content *C.char) {
+	if clipboardManager == nil {
+		return
+	}
+	goContent := C.GoString(content)
+	clipboardManager.Save(goContent)
 }
 
 func main() {

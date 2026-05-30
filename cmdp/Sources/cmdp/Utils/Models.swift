@@ -59,3 +59,16 @@ struct ShelfItem: Codable, Identifiable, Equatable {
     }
 }
 
+struct ClipboardItem: Codable, Identifiable, Equatable {
+    let id: String
+    let content: String
+    let createdAt: Int64
+    
+    enum CodingKeys: String, CodingKey {
+        case id
+        case content
+        case createdAt = "created_at"
+    }
+}
+
+

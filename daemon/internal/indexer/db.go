@@ -45,6 +45,11 @@ func OpenDB(path string) (*DB, error) {
 		shelf_path TEXT,
 		name TEXT,
 		created_at INTEGER
+	);
+	CREATE TABLE IF NOT EXISTS clipboard_items (
+		id TEXT PRIMARY KEY,
+		content TEXT,
+		created_at INTEGER
 	);`
 
 	_, err = db.Exec(query)

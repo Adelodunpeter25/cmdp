@@ -14,6 +14,7 @@ struct ContentView: View {
     @State private var isWebSearchMode: Bool = false
     @State private var isActivityMonitorMode: Bool = false
     @State private var isShelfMode: Bool = false
+    @State private var isClipboardMode: Bool = false
     @State private var processSortByCPU: Bool = false
     @FocusState private var isSearchFieldFocused: Bool
     @State private var searchDebounceItem: DispatchWorkItem?
@@ -62,6 +63,7 @@ struct ContentView: View {
                 isActivityMonitorMode: isActivityMonitorMode,
                 isWebSearchMode: isWebSearchMode,
                 isShelfMode: isShelfMode,
+                isClipboardMode: isClipboardMode,
                 isSearchFieldFocused: $isSearchFieldFocused,
                 onClear: { clearSearch() }
             )
@@ -154,6 +156,10 @@ struct ContentView: View {
                 Divider()
                 ShelfView()
                     .transition(.opacity)
+            } else if isClipboardMode {
+                Divider()
+                ClipboardView()
+                    .transition(.opacity)
             } else {
                 if !searchText.isEmpty && !groupedResults.isEmpty {
                     Divider()
@@ -194,6 +200,7 @@ struct ContentView: View {
                         hoveredIndex: $hoveredIndex,
                         isWebSearchMode: $isWebSearchMode,
                         isShelfMode: $isShelfMode,
+                        isClipboardMode: $isClipboardMode,
                         searchText: $searchText,
                         processSortByCPU: $processSortByCPU,
                         processService: processService,
@@ -258,6 +265,7 @@ struct ContentView: View {
         .onChange(of: activeWebURL) { _ in updateWindowSize() }
         .onChange(of: isWebSearchMode) { _ in updateWindowSize() }
         .onChange(of: isShelfMode) { _ in updateWindowSize() }
+        .onChange(of: isClipboardMode) { _ in updateWindowSize() }
         .onChange(of: isActivityMonitorMode) { _ in updateWindowSize() }
     }
 
@@ -375,9 +383,11 @@ struct ContentView: View {
                 }
             } else if isShelfMode {
                 totalSelectable = 0
+            } else if isClipboardMode {
+                totalSelectable = 0
             } else {
                 if searchText.isEmpty {
-                    totalSelectable = 2
+                    totalSelectable = 3
                 } else {
                     totalSelectable = groupedResults.count
                 }
@@ -402,6 +412,8 @@ struct ContentView: View {
                     }
                 } else if isShelfMode {
                     // No action
+                } else if isClipboardMode {
+                    // No action
                 } else {
                     if searchText.isEmpty {
                         if selectedIndex == 0 {
@@ -410,6 +422,10 @@ struct ContentView: View {
                             selectedIndex = 0
                         } else if selectedIndex == 1 {
                             isShelfMode = true
+                            searchText = ""
+                            selectedIndex = 0
+                        } else if selectedIndex == 2 {
+                            isClipboardMode = true
                             searchText = ""
                             selectedIndex = 0
                         }
@@ -438,6 +454,10 @@ struct ContentView: View {
                     }
                 } else if isShelfMode {
                     isShelfMode = false
+                    searchText = ""
+                    selectedIndex = 0
+                } else if isClipboardMode {
+                    isClipboardMode = false
                     searchText = ""
                     selectedIndex = 0
                 } else {

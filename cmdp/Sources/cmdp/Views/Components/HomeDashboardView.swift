@@ -5,6 +5,7 @@ struct HomeDashboardView: View {
     @Binding var hoveredIndex: Int?
     @Binding var isWebSearchMode: Bool
     @Binding var isShelfMode: Bool
+    @Binding var isClipboardMode: Bool
     @Binding var searchText: String
     @Binding var processSortByCPU: Bool
     @ObservedObject var processService: ProcessService
@@ -38,6 +39,22 @@ struct HomeDashboardView: View {
             .onHover { hoveredIndex = $0 ? 1 : nil }
             .onTapGesture {
                 isShelfMode = true
+                searchText = ""
+                selectedIndex = 0
+            }
+            .padding(.horizontal, 8)
+            .padding(.top, 8)
+
+            DashboardCommandRow(
+                iconName: "doc.on.clipboard",
+                title: "Open Clipboard",
+                iconColor: .green,
+                isSelected: selectedIndex == 2,
+                isHovered: hoveredIndex == 2
+            )
+            .onHover { hoveredIndex = $0 ? 2 : nil }
+            .onTapGesture {
+                isClipboardMode = true
                 searchText = ""
                 selectedIndex = 0
             }

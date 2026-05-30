@@ -109,6 +109,11 @@ extern char* AddToShelf(char* originalPath);
 extern char* GetShelfItems(void);
 extern int RemoveFromShelf(char* id);
 
+// Clipboard functions
+extern char* GetClipboardItems(void);
+extern int RemoveFromClipboard(char* id);
+extern void SaveClipboardItem(char* content);
+
 #ifdef __cplusplus
 }
 #endif
