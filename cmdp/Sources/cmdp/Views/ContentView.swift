@@ -172,6 +172,50 @@ struct ContentView: View {
                         )
                         .transition(.opacity)
                     }
+                } else if !searchText.isEmpty && groupedResults.isEmpty {
+                    Divider()
+                    VStack(spacing: 0) {
+                        HStack(spacing: 12) {
+                            Image(systemName: "globe")
+                                .resizable()
+                                .aspectRatio(contentMode: .fit)
+                                .frame(width: 16, height: 16)
+                                .foregroundColor(selectedIndex == 0 ? Theme.textSelected : .blue)
+                            
+                            Text("Search the web for \"\(searchText)\"")
+                                .font(.system(size: 13, weight: selectedIndex == 0 ? .semibold : .regular))
+                                .foregroundColor(selectedIndex == 0 ? Theme.textSelected : Theme.textPrimary)
+                            
+                            Spacer()
+                            
+                            Text("Enter")
+                                .font(.system(size: 10, weight: .medium))
+                                .foregroundColor(selectedIndex == 0 ? Theme.textSelected.opacity(0.7) : Theme.textSecondary.opacity(0.8))
+                                .padding(.horizontal, 6)
+                                .padding(.vertical, 2)
+                                .background(
+                                    RoundedRectangle(cornerRadius: 4)
+                                        .fill(selectedIndex == 0 ? Color.white.opacity(0.15) : Theme.hoverBackground)
+                                )
+                        }
+                        .padding(.vertical, Theme.rowPaddingVertical)
+                        .padding(.horizontal, Theme.rowPaddingHorizontal)
+                        .background(
+                            RoundedRectangle(cornerRadius: Theme.rowCornerRadius)
+                                .fill(selectedIndex == 0 ? Theme.selectionBackground : (hoveredIndex == 0 ? Theme.hoverBackground : Color.clear))
+                        )
+                        .contentShape(Rectangle())
+                        .onHover { hoveredIndex = $0 ? 0 : nil }
+                        .onTapGesture {
+                            if let url = WebService.shared.searchURL(for: searchText) {
+                                activeWebURL = url
+                                isWebSearchMode = true
+                            }
+                        }
+                    }
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 8)
+                    .transition(.opacity)
                 } else if searchText.isEmpty {
                     Divider()
                     HomeDashboardView(
@@ -368,7 +412,7 @@ struct ContentView: View {
                 if searchText.isEmpty {
                     totalSelectable = 4
                 } else {
-                    totalSelectable = groupedResults.count
+                    totalSelectable = groupedResults.isEmpty ? 1 : groupedResults.count
                 }
             }
 
@@ -411,8 +455,15 @@ struct ContentView: View {
                             openActivityMonitor()
                         }
                     } else {
-                        if selectedIndex < groupedResults.count {
-                            executeSelection(groupedResults[selectedIndex])
+                        if groupedResults.isEmpty {
+                            if let url = WebService.shared.searchURL(for: searchText) {
+                                activeWebURL = url
+                                isWebSearchMode = true
+                            }
+                        } else {
+                            if selectedIndex < groupedResults.count {
+                                executeSelection(groupedResults[selectedIndex])
+                            }
                         }
                     }
                 }
