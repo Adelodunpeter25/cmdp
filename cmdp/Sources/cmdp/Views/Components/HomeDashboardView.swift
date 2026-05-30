@@ -12,7 +12,10 @@ struct HomeDashboardView: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            WebSearchCard(
+            DashboardCommandRow(
+                iconName: "globe",
+                title: "Web Search",
+                iconColor: .blue,
                 isSelected: selectedIndex == 0,
                 isHovered: hoveredIndex == 0
             )
@@ -25,7 +28,10 @@ struct HomeDashboardView: View {
             .padding(.horizontal, 8)
             .padding(.top, 8)
             
-            OpenShelfCard(
+            DashboardCommandRow(
+                iconName: "square.and.arrow.down.on.square",
+                title: "Open Shelf",
+                iconColor: .orange,
                 isSelected: selectedIndex == 1,
                 isHovered: hoveredIndex == 1
             )

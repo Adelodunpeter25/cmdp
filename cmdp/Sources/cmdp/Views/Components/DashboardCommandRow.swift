@@ -1,19 +1,22 @@
 import SwiftUI
 
-struct WebSearchCard: View {
+struct DashboardCommandRow: View {
+    let iconName: String
+    let title: String
+    let iconColor: Color
     let isSelected: Bool
     let isHovered: Bool
     
     var body: some View {
         HStack(spacing: 12) {
-            Image(systemName: "globe")
+            Image(systemName: iconName)
                 .resizable()
                 .aspectRatio(contentMode: .fit)
                 .frame(width: 18, height: 18)
-                .foregroundColor(isSelected ? Theme.textSelected : .blue)
+                .foregroundColor(isSelected ? Theme.textSelected : iconColor)
                 .padding(4)
             
-            Text("Web Search")
+            Text(title)
                 .font(.system(size: 14, weight: isSelected ? .semibold : .regular))
                 .foregroundColor(isSelected ? Theme.textSelected : Theme.textPrimary)
             
