@@ -202,6 +202,8 @@ struct ContentView: View {
                         isShelfMode: $isShelfMode,
                         isClipboardMode: $isClipboardMode,
                         searchText: $searchText,
+                        processSortByCPU: $processSortByCPU,
+                        processService: processService,
                         onOpenActivityMonitor: {
                             openActivityMonitor()
                         }

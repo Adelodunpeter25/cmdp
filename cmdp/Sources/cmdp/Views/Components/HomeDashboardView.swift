@@ -7,6 +7,8 @@ struct HomeDashboardView: View {
     @Binding var isShelfMode: Bool
     @Binding var isClipboardMode: Bool
     @Binding var searchText: String
+    @Binding var processSortByCPU: Bool
+    @ObservedObject var processService: ProcessService
     let onOpenActivityMonitor: () -> Void
 
     var body: some View {
@@ -72,7 +74,66 @@ struct HomeDashboardView: View {
             }
             .padding(.horizontal, 8)
             .padding(.top, 8)
-            .padding(.bottom, 8)
+            
+            Divider()
+                .padding(.top, 8)
+                .opacity(0.4)
+            
+            HStack(spacing: 8) {
+                if let stats = processService.systemStats {
+                    // CPU Pill
+                    Button(action: {
+                        processSortByCPU = true
+                        onOpenActivityMonitor()
+                    }) {
+                        HStack(spacing: 4) {
+                            Image(systemName: "cpu")
+                                .font(.system(size: 10))
+                                .foregroundColor(Theme.textSecondary)
+                            Text(String(format: "%.0f%%", stats.cpuUsage))
+                                .font(.system(size: 10, weight: .semibold))
+                                .foregroundColor(Theme.textPrimary)
+                        }
+                        .padding(.vertical, 4)
+                        .padding(.horizontal, 8)
+                        .background(Theme.hoverBackground)
+                        .cornerRadius(12)
+                    }
+                    .buttonStyle(PlainButtonStyle())
+                    
+                    // Memory Pill
+                    Button(action: {
+                        processSortByCPU = false
+                        onOpenActivityMonitor()
+                    }) {
+                        HStack(spacing: 4) {
+                            Image(systemName: "memorychip")
+                                .font(.system(size: 10))
+                                .foregroundColor(Theme.textSecondary)
+                            let usedPercent = Double(stats.usedMemory) / Double(stats.totalMemory) * 100
+                            Text(String(format: "%.0f%%", usedPercent))
+                                .font(.system(size: 10, weight: .semibold))
+                                .foregroundColor(Theme.textPrimary)
+                        }
+                        .padding(.vertical, 4)
+                        .padding(.horizontal, 8)
+                        .background(Theme.hoverBackground)
+                        .cornerRadius(12)
+                    }
+                    .buttonStyle(PlainButtonStyle())
+                } else {
+                    ProgressView()
+                        .scaleEffect(0.6)
+                        .frame(width: 12, height: 12)
+                    Text("Loading system stats...")
+                        .font(.system(size: 10))
+                        .foregroundColor(Theme.textSecondary)
+                }
+                
+                Spacer()
+            }
+            .padding(.horizontal, 12)
+            .padding(.vertical, 6)
         }
     }
 }
