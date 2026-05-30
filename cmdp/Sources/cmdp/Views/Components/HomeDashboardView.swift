@@ -11,15 +11,26 @@ struct HomeDashboardView: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            WebSearchCard(
-                isSelected: selectedIndex == 0,
-                isHovered: hoveredIndex == 0
-            )
-            .onHover { hoveredIndex = $0 ? 0 : nil }
-            .onTapGesture {
-                isWebSearchMode = true
-                searchText = ""
-                selectedIndex = 0
+            HStack(spacing: 8) {
+                WebSearchCard(
+                    isSelected: selectedIndex == 0,
+                    isHovered: hoveredIndex == 0
+                )
+                .onHover { hoveredIndex = $0 ? 0 : nil }
+                .onTapGesture {
+                    isWebSearchMode = true
+                    searchText = ""
+                    selectedIndex = 0
+                }
+                
+                OpenShelfCard(
+                    isSelected: selectedIndex == 99,
+                    isHovered: hoveredIndex == 99
+                )
+                .onHover { hoveredIndex = $0 ? 99 : nil }
+                .onTapGesture {
+                    ShelfWindowManager.shared.openShelfWindow()
+                }
             }
             .padding(.horizontal, 8)
             .padding(.top, 8)
