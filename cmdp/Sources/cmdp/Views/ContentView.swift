@@ -137,7 +137,7 @@ struct ContentView: View {
                     .transition(.opacity)
             } else if isClipboardMode {
                 Divider()
-                ClipboardView()
+                ClipboardView(searchText: $searchText)
                     .transition(.opacity)
             } else {
                 if !searchText.isEmpty && !groupedResults.isEmpty {
@@ -265,6 +265,12 @@ struct ContentView: View {
             }
 
             if isWebSearchMode {
+                selectedIndex = 0
+                updateWindowSize()
+                return
+            }
+
+            if isClipboardMode {
                 selectedIndex = 0
                 updateWindowSize()
                 return

@@ -2,8 +2,18 @@ import SwiftUI
 import AppKit
 
 struct ClipboardView: View {
+    @Binding var searchText: String
     @StateObject private var clipboardService = ClipboardService.shared
     @State private var selectedItemId: String? = nil
+    
+    var filteredItems: [ClipboardItem] {
+        if searchText.isEmpty {
+            return clipboardService.items
+        } else {
+            let query = searchText.lowercased()
+            return clipboardService.items.filter { $0.content.lowercased().contains(query) }
+        }
+    }
     
     var body: some View {
         VStack(spacing: 0) {
@@ -23,10 +33,21 @@ struct ClipboardView: View {
                 }
                 .frame(maxHeight: .infinity)
                 .background(Color.clear)
+            } else if filteredItems.isEmpty {
+                VStack(spacing: 12) {
+                    Image(systemName: "magnifyingglass")
+                        .font(.system(size: 40))
+                        .foregroundColor(Theme.textSecondary.opacity(0.4))
+                    Text("No results for \"\(searchText)\"")
+                        .font(.system(size: 14, weight: .medium))
+                        .foregroundColor(Theme.textSecondary)
+                }
+                .frame(maxHeight: .infinity)
+                .background(Color.clear)
             } else {
                 ScrollView {
                     LazyVStack(spacing: 8) {
-                        ForEach(clipboardService.items) { item in
+                        ForEach(filteredItems) { item in
                             ClipboardItemRow(
                                 item: item,
                                 isSelected: selectedItemId == item.id,
@@ -70,13 +91,27 @@ struct ClipboardItemRow: View {
             Spacer()
             
             if isHovered {
-                Button(action: {
-                    clipboardService.deleteItem(id: item.id)
-                }) {
-                    Image(systemName: "xmark.circle.fill")
-                        .foregroundColor(isSelected ? Theme.textSelected : .red.opacity(0.8))
+                HStack(spacing: 8) {
+                    // Hover Copy Button
+                    Button(action: {
+                        clipboardService.copyToClipboard(content: item.content)
+                    }) {
+                        Image(systemName: "doc.on.doc")
+                            .font(.system(size: 12))
+                            .foregroundColor(isSelected ? Theme.textSelected : Theme.textSecondary)
+                    }
+                    .buttonStyle(PlainButtonStyle())
+                    
+                    // Hover Delete Button
+                    Button(action: {
+                        clipboardService.deleteItem(id: item.id)
+                    }) {
+                        Image(systemName: "xmark.circle.fill")
+                            .font(.system(size: 12))
+                            .foregroundColor(isSelected ? Theme.textSelected : .red.opacity(0.8))
+                    }
+                    .buttonStyle(PlainButtonStyle())
                 }
-                .buttonStyle(PlainButtonStyle())
             }
         }
         .padding(.vertical, 8)
