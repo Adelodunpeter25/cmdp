@@ -153,7 +153,10 @@ func (m *Manager) Watch() {
 	}()
 
 	for _, dir := range m.dirs {
-		addRecursive(dir)
+		// Only watch application directories, skip user documents/folders for fsnotify
+		if dir == "/Applications" || dir == "/System/Applications" || strings.HasSuffix(filepath.Clean(dir), "Applications") {
+			addRecursive(dir)
+		}
 	}
 	select {}
 }
