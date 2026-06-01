@@ -70,6 +70,7 @@ struct ClipboardItemRow: View {
     let onSelect: () -> Void
     @StateObject private var clipboardService = ClipboardService.shared
     @State private var isHovered = false
+    @State private var isCopied = false
     
     var body: some View {
         HStack(spacing: 12) {
@@ -95,10 +96,14 @@ struct ClipboardItemRow: View {
                     // Hover Copy Button
                     Button(action: {
                         clipboardService.copyToClipboard(content: item.content)
+                        isCopied = true
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
+                            isCopied = false
+                        }
                     }) {
-                        Image(systemName: "doc.on.doc")
+                        Image(systemName: isCopied ? "checkmark" : "doc.on.doc")
                             .font(.system(size: 12))
-                            .foregroundColor(isSelected ? Theme.textSelected : Theme.textSecondary)
+                            .foregroundColor(isCopied ? .green : (isSelected ? Theme.textSelected : Theme.textSecondary))
                     }
                     .buttonStyle(PlainButtonStyle())
                     
@@ -122,10 +127,6 @@ struct ClipboardItemRow: View {
         )
         .contentShape(Rectangle())
         .onHover { isHovered = $0 }
-        .onTapGesture(count: 2) {
-            clipboardService.copyToClipboard(content: item.content)
-            NSApp.hide(nil)
-        }
         .simultaneousGesture(
             TapGesture(count: 1).onEnded {
                 onSelect()
