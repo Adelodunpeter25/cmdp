@@ -37,6 +37,7 @@ func (m *Manager) Start() error {
 	// 2. Perform a fresh scan in the background
 	go m.refresh()
 	go m.refreshFiles()
+	go m.Watch()
 
 	return nil
 }
