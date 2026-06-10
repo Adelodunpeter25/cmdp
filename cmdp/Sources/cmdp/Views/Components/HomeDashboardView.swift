@@ -15,7 +15,7 @@ struct HomeDashboardView: View {
     var body: some View {
         VStack(spacing: 0) {
             DashboardCommandRow(
-                iconName: "globe",
+                iconName: Command.Symbols.web,
                 title: "Web Search",
                 iconColor: .blue,
                 isSelected: selectedIndex == 0,
@@ -31,7 +31,7 @@ struct HomeDashboardView: View {
             .padding(.top, 8)
             
             DashboardCommandRow(
-                iconName: "square.and.arrow.down.on.square",
+                iconName: Command.Symbols.shelf,
                 title: "Open Shelf",
                 iconColor: .orange,
                 isSelected: selectedIndex == 1,
@@ -47,7 +47,7 @@ struct HomeDashboardView: View {
             .padding(.top, 8)
 
             DashboardCommandRow(
-                iconName: "doc.on.clipboard",
+                iconName: Command.Symbols.clipboard,
                 title: "Open Clipboard",
                 iconColor: .green,
                 isSelected: selectedIndex == 2,
@@ -63,7 +63,7 @@ struct HomeDashboardView: View {
             .padding(.top, 8)
 
             DashboardCommandRow(
-                iconName: "cpu",
+                iconName: Command.Symbols.activity,
                 title: "Open Activity Monitor",
                 iconColor: .purple,
                 isSelected: selectedIndex == 3,
@@ -77,7 +77,7 @@ struct HomeDashboardView: View {
             .padding(.top, 8)
 
             DashboardCommandRow(
-                iconName: "gearshape",
+                iconName: Command.Symbols.settings,
                 title: "Settings",
                 iconColor: .gray,
                 isSelected: selectedIndex == 4,
@@ -104,7 +104,7 @@ struct HomeDashboardView: View {
                         onOpenActivityMonitor()
                     }) {
                         HStack(spacing: 4) {
-                            Image(systemName: "cpu")
+                            Image(systemName: Command.Symbols.activity)
                                 .font(.system(size: 10))
                                 .foregroundColor(Theme.textSecondary)
                             Text(String(format: "%.0f%%", stats.cpuUsage))
@@ -126,7 +126,7 @@ struct HomeDashboardView: View {
                         onOpenActivityMonitor()
                     }) {
                         HStack(spacing: 4) {
-                            Image(systemName: "memorychip")
+                            Image(systemName: Command.Symbols.memory)
                                 .font(.system(size: 10))
                                 .foregroundColor(Theme.textSecondary)
                             let usedPercent = Double(stats.usedMemory) / Double(stats.totalMemory) * 100

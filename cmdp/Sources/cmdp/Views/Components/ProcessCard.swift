@@ -7,7 +7,7 @@ struct CPUProcessCard: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
-            metricHeader(title: "CPU USAGE", value: String(format: "%.1f%%", stats.cpuUsage), icon: "cpu")
+            metricHeader(title: "CPU USAGE", value: String(format: "%.1f%%", stats.cpuUsage), icon: Command.Symbols.activity)
             
             progressBar(value: CGFloat(stats.cpuUsage / 100.0), color: Color.accentColor)
             
@@ -94,7 +94,7 @@ struct MemoryProcessCard: View {
             let totalGB = Double(stats.totalMemory) / 1_073_741_824.0
             let memoryPercent = stats.totalMemory > 0 ? Double(stats.usedMemory) / Double(stats.totalMemory) : 0.0
             
-            metricHeader(title: "MEMORY", value: String(format: "%.1f GB / %.1f GB", usedGB, totalGB), icon: "memorychip")
+            metricHeader(title: "MEMORY", value: String(format: "%.1f GB / %.1f GB", usedGB, totalGB), icon: Command.Symbols.memory)
             
             progressBar(value: CGFloat(memoryPercent), color: Color.purple)
             

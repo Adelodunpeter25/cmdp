@@ -127,7 +127,8 @@ struct ContentView: View {
                     Divider()
                     VStack(spacing: 12) {
                         Spacer()
-                        Image(systemName: "globe")
+                        Image(systemName: Command.Symbols.web)
+
                             .font(.system(size: 32))
                             .foregroundColor(Theme.textSecondary.opacity(0.4))
                         
@@ -192,7 +193,8 @@ struct ContentView: View {
                     Divider()
                     VStack(spacing: 0) {
                         HStack(spacing: 12) {
-                            Image(systemName: "globe")
+                            Image(systemName: Command.Symbols.web)
+
                                 .resizable()
                                 .aspectRatio(contentMode: .fit)
                                 .frame(width: 16, height: 16)

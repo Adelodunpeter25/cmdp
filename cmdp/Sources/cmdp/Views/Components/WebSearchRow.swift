@@ -7,7 +7,7 @@ struct WebSearchRow: View {
 
     var body: some View {
         HStack(spacing: 12) {
-            Image(systemName: "globe")
+            Image(systemName: Command.Symbols.web)
                 .resizable()
                 .aspectRatio(contentMode: .fit)
                 .frame(width: 18, height: 18)

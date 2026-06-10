@@ -19,7 +19,7 @@ struct ClipboardView: View {
         VStack(spacing: 0) {
             if clipboardService.items.isEmpty {
                 VStack(spacing: 12) {
-                    Image(systemName: "doc.on.clipboard")
+                    Image(systemName: Command.Symbols.clipboard)
                         .font(.system(size: 40))
                         .foregroundColor(Theme.textSecondary.opacity(0.4))
                     Text("Clipboard history is empty")
@@ -34,9 +34,10 @@ struct ClipboardView: View {
                 .frame(maxHeight: .infinity)
                 .background(Color.clear)
             } else if filteredItems.isEmpty {
-                VStack(spacing: 12) {
-                    Image(systemName: "magnifyingglass")
-                        .font(.system(size: 40))
+               VStack(spacing: 12) {
+                   Image(systemName: Command.Symbols.search)
+                       .font(.system(size: 40))
+
                         .foregroundColor(Theme.textSecondary.opacity(0.4))
                     Text("No results for \"\(searchText)\"")
                         .font(.system(size: 14, weight: .medium))

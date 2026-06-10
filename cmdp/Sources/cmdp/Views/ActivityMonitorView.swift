@@ -121,7 +121,7 @@ struct ProcessRow: View {
     
     var body: some View {
         HStack(spacing: 12) {
-            Image(systemName: "cpu")
+            Image(systemName: Command.Symbols.activity)
                 .font(.system(size: 12))
                 .foregroundColor(isSelected ? Theme.textSelected.opacity(0.8) : Theme.textSecondary)
             

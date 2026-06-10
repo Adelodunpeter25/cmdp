@@ -12,7 +12,7 @@ struct SearchBarView: View {
 
     var body: some View {
         HStack {
-            Image(systemName: isActivityMonitorMode ? "cpu" : (isWebSearchMode ? "globe" : (isShelfMode ? "square.and.arrow.down.on.square" : (isClipboardMode ? "doc.on.clipboard" : (isSettingsMode ? "gearshape" : (searchText.hasPrefix("/") ? "magnifyingglass" : (searchText.hasPrefix(">") ? "terminal" : "command")))))))
+            Image(systemName: isActivityMonitorMode ? Command.Symbols.activity : (isWebSearchMode ? Command.Symbols.web : (isShelfMode ? Command.Symbols.shelf : (isClipboardMode ? Command.Symbols.clipboard : (isSettingsMode ? Command.Symbols.settings : (searchText.hasPrefix("/") ? Command.Symbols.search : (searchText.hasPrefix(">") ? Command.Symbols.terminal : Command.Symbols.command)))))))
                 .font(.system(size: 22, weight: .light))
                 .foregroundColor(Theme.searchIconColor)
                 .padding(.leading, 4)
@@ -27,7 +27,7 @@ struct SearchBarView: View {
 
             if !searchText.isEmpty {
                 Button(action: onClear) {
-                    Image(systemName: "xmark.circle.fill")
+                    Image(systemName: Command.Symbols.xmark)
                         .foregroundColor(Theme.searchIconColor)
                 }
                 .buttonStyle(.plain)
