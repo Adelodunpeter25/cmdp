@@ -25,11 +25,12 @@ struct ResultRow: View {
                     .frame(width: Theme.iconSize, height: Theme.iconSize)
                     .foregroundColor(.blue)
             } else if result.Item.itemType == .command {
-                Image(systemName: IconManager.shared.getCommandIcon(for: result.Item.Path))
+                let (icon, color) = IconManager.shared.getCommandIcon(for: result.Item.Path)
+                Image(systemName: icon)
                     .resizable()
                     .aspectRatio(contentMode: .fit)
                     .frame(width: Theme.iconSize - 4, height: Theme.iconSize - 4)
-                    .foregroundColor(isSelected ? Theme.textSelected : .blue)
+                    .foregroundColor(isSelected ? Theme.textSelected : color)
                     .padding(4)
             }
 

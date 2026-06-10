@@ -1,9 +1,11 @@
 import Foundation
+import SwiftUI
 
 struct Command: Identifiable, Equatable {
     let id: String
     let name: String
     let iconName: String // SF Symbol name
+    let color: Color
     let script: String
     
     struct Symbols {
@@ -30,66 +32,77 @@ struct Command: Identifiable, Equatable {
             id: "sleep",
             name: "Sleep",
             iconName: Symbols.sleep,
+            color: .blue,
             script: "tell application \"Finder\" to sleep"
         ),
         Command(
             id: "restart",
             name: "Restart...",
             iconName: Symbols.restart,
+            color: .orange,
             script: "tell application \"Finder\" to restart"
         ),
         Command(
             id: "shutdown",
             name: "Shut Down...",
             iconName: Symbols.shutdown,
+            color: .red,
             script: "tell application \"Finder\" to shut down"
         ),
         Command(
             id: "lock",
             name: "Lock Screen",
             iconName: Symbols.lock,
+            color: .purple,
             script: "do shell script \"/usr/bin/pmset displaysleepnow\""
         ),
         Command(
             id: "empty-trash",
             name: "Empty Trash",
             iconName: Symbols.trash,
+            color: .gray,
             script: "tell application \"Finder\"\nif (count of items in trash) > 0 then\nempty trash\nend if\nend tell"
         ),
         Command(
             id: "reset-index",
             name: "Reset Index",
             iconName: Symbols.resetIndex,
+            color: .teal,
             script: "RESET_INDEX"
         ),
         Command(
             id: "nav-web",
             name: "Web Search Mode",
             iconName: Symbols.web,
+            color: .blue,
             script: "INTERNAL_NAV"
         ),
         Command(
             id: "nav-shelf",
             name: "Shelf",
             iconName: Symbols.shelf,
+            color: .orange,
             script: "INTERNAL_NAV"
         ),
         Command(
             id: "nav-clipboard",
             name: "Clipboard History",
             iconName: Symbols.clipboard,
+            color: .green,
             script: "INTERNAL_NAV"
         ),
         Command(
             id: "nav-activity",
             name: "Activity Monitor",
             iconName: Symbols.activity,
+            color: .purple,
             script: "INTERNAL_NAV"
         ),
         Command(
             id: "nav-settings",
             name: "Settings",
             iconName: Symbols.settings,
+            color: .gray,
             script: "INTERNAL_NAV"
         )
     ]

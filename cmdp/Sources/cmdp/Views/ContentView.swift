@@ -235,17 +235,7 @@ struct ContentView: View {
                     .padding(.vertical, 8)
                     .transition(.opacity)
                 } else if searchText.isEmpty {
-                    // Empty state - just the search bar (already shown above)
-                    // We can optionally add a subtle hint here
-                    VStack(spacing: 8) {
-                        Spacer()
-                        Text("Type to search, / for files, > for commands")
-                            .font(.system(size: 12))
-                            .foregroundColor(Theme.textSecondary.opacity(0.5))
-                        Spacer()
-                    }
-                    .frame(height: 100)
-                    .frame(maxWidth: .infinity)
+                    // Empty state - nothing shown below the search bar
                 }
             }
         }

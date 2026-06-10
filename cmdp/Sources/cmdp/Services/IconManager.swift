@@ -34,10 +34,10 @@ class IconManager: ObservableObject {
         return nil
     }
 
-    func getCommandIcon(for commandId: String) -> String {
+    func getCommandIcon(for commandId: String) -> (String, Color) {
         if let command = Command.allCommands.first(where: { $0.id == commandId }) {
-            return command.iconName
+            return (command.iconName, command.color)
         }
-        return Command.Symbols.command
+        return (Command.Symbols.command, .gray)
     }
 }
