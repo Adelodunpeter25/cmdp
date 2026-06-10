@@ -6,6 +6,7 @@ struct HomeDashboardView: View {
     @Binding var isWebSearchMode: Bool
     @Binding var isShelfMode: Bool
     @Binding var isClipboardMode: Bool
+    @Binding var isSettingsMode: Bool
     @Binding var searchText: String
     @Binding var processSortByCPU: Bool
     @ObservedObject var processService: ProcessService
@@ -71,6 +72,22 @@ struct HomeDashboardView: View {
             .onHover { hoveredIndex = $0 ? 3 : nil }
             .onTapGesture {
                 onOpenActivityMonitor()
+            }
+            .padding(.horizontal, 8)
+            .padding(.top, 8)
+
+            DashboardCommandRow(
+                iconName: "gearshape",
+                title: "Settings",
+                iconColor: .gray,
+                isSelected: selectedIndex == 4,
+                isHovered: hoveredIndex == 4
+            )
+            .onHover { hoveredIndex = $0 ? 4 : nil }
+            .onTapGesture {
+                isSettingsMode = true
+                searchText = ""
+                selectedIndex = 0
             }
             .padding(.horizontal, 8)
             .padding(.top, 8)

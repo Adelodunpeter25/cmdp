@@ -15,6 +15,7 @@ struct ContentView: View {
     @State private var isActivityMonitorMode: Bool = false
     @State private var isShelfMode: Bool = false
     @State private var isClipboardMode: Bool = false
+    @State private var isSettingsMode: Bool = false
     @State private var processSortByCPU: Bool = false
     @FocusState private var isSearchFieldFocused: Bool
     @State private var searchDebounceItem: DispatchWorkItem?
@@ -139,6 +140,10 @@ struct ContentView: View {
                 Divider()
                 ClipboardView(searchText: $searchText)
                     .transition(.opacity)
+            } else if isSettingsMode {
+                Divider()
+                SettingsView(isSettingsMode: $isSettingsMode)
+                    .transition(.opacity)
             } else {
                 if !searchText.isEmpty && !groupedResults.isEmpty {
                     Divider()
@@ -224,6 +229,7 @@ struct ContentView: View {
                         isWebSearchMode: $isWebSearchMode,
                         isShelfMode: $isShelfMode,
                         isClipboardMode: $isClipboardMode,
+                        isSettingsMode: $isSettingsMode,
                         searchText: $searchText,
                         processSortByCPU: $processSortByCPU,
                         processService: processService,
@@ -276,6 +282,12 @@ struct ContentView: View {
                 return
             }
 
+            if isSettingsMode {
+                selectedIndex = 0
+                updateWindowSize()
+                return
+            }
+
             if newValue.isEmpty {
                 processService.startPolling()
             } else {
@@ -295,6 +307,7 @@ struct ContentView: View {
         .onChange(of: isWebSearchMode) { _ in updateWindowSize() }
         .onChange(of: isShelfMode) { _ in updateWindowSize() }
         .onChange(of: isClipboardMode) { _ in updateWindowSize() }
+        .onChange(of: isSettingsMode) { _ in updateWindowSize() }
         .onChange(of: isActivityMonitorMode) { _ in updateWindowSize() }
     }
 
@@ -414,9 +427,11 @@ struct ContentView: View {
                 totalSelectable = 0
             } else if isClipboardMode {
                 totalSelectable = 0
+            } else if isSettingsMode {
+                totalSelectable = 0
             } else {
                 if searchText.isEmpty {
-                    totalSelectable = 4
+                    totalSelectable = 5
                 } else {
                     totalSelectable = groupedResults.isEmpty ? 1 : groupedResults.count
                 }
@@ -459,6 +474,10 @@ struct ContentView: View {
                             selectedIndex = 0
                         } else if selectedIndex == 3 {
                             openActivityMonitor()
+                        } else if selectedIndex == 4 {
+                            isSettingsMode = true
+                            searchText = ""
+                            selectedIndex = 0
                         }
                     } else {
                         if groupedResults.isEmpty {
@@ -496,6 +515,10 @@ struct ContentView: View {
                     selectedIndex = 0
                 } else if isClipboardMode {
                     isClipboardMode = false
+                    searchText = ""
+                    selectedIndex = 0
+                } else if isSettingsMode {
+                    isSettingsMode = false
                     searchText = ""
                     selectedIndex = 0
                 } else {
