@@ -381,25 +381,31 @@ struct ContentView: View {
     }
 
     func executeSelection(_ result: SearchResult) {
-        // Hide the app immediately so the UI doesn't hang on screen
-        NSApp.hide(nil)
-
         let path = result.Item.Path
         let url = URL(fileURLWithPath: path)
 
         if result.Item.itemType == .command {
-            executeCommand(path)
-        } else if result.Item.itemType == .app {
-            // Launch the application asynchronously to prevent main-thread freezing
-            NSWorkspace.shared.open(url, configuration: NSWorkspace.OpenConfiguration()) { _, error in
-                if let error = error {
-                    print("ContentView: Failed to open app asynchronously: \(error)")
-                }
+            // Only hide if it's not a navigation command
+            if !path.hasPrefix("nav-") && path != "reset-index" {
+                NSApp.hide(nil)
             }
+            executeCommand(path)
         } else {
-            // Reveal folders and files in Finder on a background queue to keep main-thread responsive
-            DispatchQueue.global(qos: .userInitiated).async {
-                NSWorkspace.shared.activateFileViewerSelecting([url])
+            // Apps, folders, and files always hide the app
+            NSApp.hide(nil)
+            
+            if result.Item.itemType == .app {
+                // Launch the application asynchronously to prevent main-thread freezing
+                NSWorkspace.shared.open(url, configuration: NSWorkspace.OpenConfiguration()) { _, error in
+                    if let error = error {
+                        print("ContentView: Failed to open app asynchronously: \(error)")
+                    }
+                }
+            } else {
+                // Reveal folders and files in Finder on a background queue to keep main-thread responsive
+                DispatchQueue.global(qos: .userInitiated).async {
+                    NSWorkspace.shared.activateFileViewerSelecting([url])
+                }
             }
         }
     }
