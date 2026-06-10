@@ -10,8 +10,6 @@ struct ContentView: View {
     @State private var searchText: String = ""
     @State private var selectedIndex: Int = 0
     @State private var hoveredIndex: Int? = nil
-    @State private var activeWebURL: URL? = nil
-    @State private var isWebSearchMode: Bool = false
     @State private var isActivityMonitorMode: Bool = false
     @State private var isShelfMode: Bool = false
     @State private var isClipboardMode: Bool = false
@@ -19,7 +17,6 @@ struct ContentView: View {
     @State private var processSortByCPU: Bool = false
     @FocusState private var isSearchFieldFocused: Bool
     @State private var searchDebounceItem: DispatchWorkItem?
-    @State private var loadedWebURL: URL?
 
     // MARK: Computed display list
 
@@ -30,17 +27,22 @@ struct ContentView: View {
         if searchText.hasPrefix("/") {
             return searchService.results
         }
-        if searchText.hasPrefix(">") {
-            let query = String(searchText.dropFirst()).lowercased()
-            let allCmds = Command.allCommands.map { cmd in
-                SearchResult(Item: IndexItem(Name: cmd.name, Path: cmd.id, IconPath: "", itemType: .command), Score: 0)
-            }
-            if query.isEmpty {
-                return allCmds
-            }
-            return allCmds.filter { $0.Item.Name.lowercased().contains(query) }
+        
+        let query = searchText.hasPrefix(">") ? String(searchText.dropFirst()) : searchText
+        let lowerQuery = query.lowercased()
+        
+        // Always include matching commands
+        let commandResults = Command.allCommands.filter { cmd in
+            lowerQuery.isEmpty || cmd.name.lowercased().contains(lowerQuery) || cmd.id.lowercased().contains(lowerQuery)
+        }.map { cmd in
+            SearchResult(Item: IndexItem(Name: cmd.name, Path: cmd.id, IconPath: "", itemType: .command), Score: 100)
         }
-        return groupAndSort(searchService.results)
+        
+        if searchText.hasPrefix(">") {
+            return commandResults
+        }
+        
+        return groupAndSort(searchService.results + commandResults)
     }
 
     /// The full list interleaved with section headers, ready for ForEach.
@@ -72,7 +74,6 @@ struct ContentView: View {
             SearchBarView(
                 searchText: $searchText,
                 isActivityMonitorMode: isActivityMonitorMode,
-                isWebSearchMode: isWebSearchMode,
                 isShelfMode: isShelfMode,
                 isClipboardMode: isClipboardMode,
                 isSettingsMode: isSettingsMode,
@@ -93,57 +94,6 @@ struct ContentView: View {
                         processService.confirmKillProcess(proc, force: force)
                     }
                 )
-            } else if isWebSearchMode {
-                if let webURL = activeWebURL {
-                    Divider()
-                    WebView(url: webURL)
-                        .frame(height: 400)
-                        .transition(.opacity)
-                        .onChange(of: activeWebURL) { _ in
-                            // When URL changes, update loaded flag
-                            if let url = activeWebURL {
-                                loadedWebURL = url
-                            }
-                        }
-                } else if !searchText.isEmpty {
-                    Divider()
-                    VStack(spacing: 0) {
-                        WebSearchRow(
-                            query: searchText,
-                            isSelected: selectedIndex == 0,
-                            isHovered: hoveredIndex == 0
-                        )
-                        .onHover { hoveredIndex = $0 ? 0 : nil }
-                        .onTapGesture {
-                            if let url = WebService.shared.searchURL(for: searchText) {
-                                activeWebURL = url
-                            }
-                        }
-                    }
-                    .padding(.horizontal, 8)
-                    .padding(.vertical, 8)
-                    .transition(.opacity)
-                } else {
-                    Divider()
-                    VStack(spacing: 12) {
-                        Spacer()
-                        Image(systemName: Command.Symbols.web)
-
-                            .font(.system(size: 32))
-                            .foregroundColor(Theme.textSecondary.opacity(0.4))
-                        
-                        Text("Web Search Mode")
-                            .font(.system(size: 14, weight: .medium))
-                            .foregroundColor(Theme.textSecondary)
-                        
-                        Text("Type a query above to search the web.")
-                            .font(.system(size: 11))
-                            .foregroundColor(Theme.textSecondary.opacity(0.7))
-                        Spacer()
-                    }
-                    .frame(height: 200)
-                    .frame(maxWidth: .infinity)
-                }
             } else if isShelfMode {
                 Divider()
                 ShelfView()
@@ -189,51 +139,6 @@ struct ContentView: View {
                         )
                         .transition(.opacity)
                     }
-                } else if !searchText.isEmpty && groupedResults.isEmpty {
-                    Divider()
-                    VStack(spacing: 0) {
-                        HStack(spacing: 12) {
-                            Image(systemName: Command.Symbols.web)
-
-                                .resizable()
-                                .aspectRatio(contentMode: .fit)
-                                .frame(width: 16, height: 16)
-                                .foregroundColor(selectedIndex == 0 ? Theme.textSelected : .blue)
-                            
-                            Text("Search the web for \"\(searchText)\"")
-                                .font(.system(size: 13, weight: selectedIndex == 0 ? .semibold : .regular))
-                                .foregroundColor(selectedIndex == 0 ? Theme.textSelected : Theme.textPrimary)
-                            
-                            Spacer()
-                            
-                            Text("Enter")
-                                .font(.system(size: 10, weight: .medium))
-                                .foregroundColor(selectedIndex == 0 ? Theme.textSelected.opacity(0.7) : Theme.textSecondary.opacity(0.8))
-                                .padding(.horizontal, 6)
-                                .padding(.vertical, 2)
-                                .background(
-                                    RoundedRectangle(cornerRadius: 4)
-                                        .fill(selectedIndex == 0 ? Color.white.opacity(0.15) : Theme.hoverBackground)
-                                )
-                        }
-                        .padding(.vertical, Theme.rowPaddingVertical)
-                        .padding(.horizontal, Theme.rowPaddingHorizontal)
-                        .background(
-                            RoundedRectangle(cornerRadius: Theme.rowCornerRadius)
-                                .fill(selectedIndex == 0 ? Theme.selectionBackground : (hoveredIndex == 0 ? Theme.hoverBackground : Color.clear))
-                        )
-                        .contentShape(Rectangle())
-                        .onHover { hoveredIndex = $0 ? 0 : nil }
-                        .onTapGesture {
-                            if let url = WebService.shared.searchURL(for: searchText) {
-                                activeWebURL = url
-                                isWebSearchMode = true
-                            }
-                        }
-                    }
-                    .padding(.horizontal, 8)
-                    .padding(.vertical, 8)
-                    .transition(.opacity)
                 } else if searchText.isEmpty {
                     // Empty state - nothing shown below the search bar
                 }
@@ -264,17 +169,6 @@ struct ContentView: View {
 
             searchDebounceItem?.cancel()
 
-            if activeWebURL != nil {
-                loadedWebURL = nil
-                activeWebURL = nil
-            }
-
-            if isWebSearchMode {
-                selectedIndex = 0
-                updateWindowSize()
-                return
-            }
-
             if isClipboardMode {
                 selectedIndex = 0
                 updateWindowSize()
@@ -302,8 +196,6 @@ struct ContentView: View {
         }
         .onChange(of: searchService.results) { _ in updateWindowSize() }
         .onChange(of: processService.systemStats) { _ in updateWindowSize() }
-        .onChange(of: activeWebURL) { _ in updateWindowSize() }
-        .onChange(of: isWebSearchMode) { _ in updateWindowSize() }
         .onChange(of: isShelfMode) { _ in updateWindowSize() }
         .onChange(of: isClipboardMode) { _ in updateWindowSize() }
         .onChange(of: isSettingsMode) { _ in updateWindowSize() }
@@ -414,14 +306,6 @@ struct ContentView: View {
             let totalSelectable: Int
             if isActivityMonitorMode {
                 totalSelectable = processService.filteredProcesses(searchText: searchText, processSortByCPU: processSortByCPU).count
-            } else if isWebSearchMode {
-                if activeWebURL != nil {
-                    totalSelectable = 0
-                } else if searchText.isEmpty {
-                    totalSelectable = 0
-                } else {
-                    totalSelectable = 1
-                }
             } else if isShelfMode {
                 totalSelectable = 0
             } else if isClipboardMode {
@@ -432,7 +316,7 @@ struct ContentView: View {
                 if searchText.isEmpty {
                     totalSelectable = 0
                 } else {
-                    totalSelectable = groupedResults.isEmpty ? 1 : groupedResults.count
+                    totalSelectable = groupedResults.count
                 }
             }
 
@@ -449,10 +333,6 @@ struct ContentView: View {
                     if selectedIndex < procs.count {
                         processService.confirmKillProcess(procs[selectedIndex], force: false)
                     }
-                } else if isWebSearchMode {
-                    if let url = WebService.shared.searchURL(for: searchText) {
-                        activeWebURL = url
-                    }
                 } else if isShelfMode {
                     // No action
                 } else if isClipboardMode {
@@ -460,19 +340,8 @@ struct ContentView: View {
                 } else if isSettingsMode {
                     // No action
                 } else {
-                    if searchText.isEmpty {
-                        // No action
-                    } else {
-                        if groupedResults.isEmpty {
-                            if let url = WebService.shared.searchURL(for: searchText) {
-                                activeWebURL = url
-                                isWebSearchMode = true
-                            }
-                        } else {
-                            if selectedIndex < groupedResults.count {
-                                executeSelection(groupedResults[selectedIndex])
-                            }
-                        }
+                    if !searchText.isEmpty && selectedIndex < groupedResults.count {
+                        executeSelection(groupedResults[selectedIndex])
                     }
                 }
                 return nil
@@ -481,17 +350,6 @@ struct ContentView: View {
                     isActivityMonitorMode = false
                     searchText = ""
                     selectedIndex = 0
-                } else if isWebSearchMode {
-                    if activeWebURL != nil {
-                        loadedWebURL = nil
-                        activeWebURL = nil
-                        selectedIndex = 0
-                    } else {
-                        isWebSearchMode = false
-                        searchText = ""
-                        selectedIndex = 0
-                        loadedWebURL = nil
-                    }
                 } else if isShelfMode {
                     isShelfMode = false
                     searchText = ""
@@ -549,9 +407,6 @@ struct ContentView: View {
     private func executeCommand(_ commandId: String) {
         if commandId == "reset-index" {
             searchService.resetIndex()
-        } else if commandId == "nav-web" {
-            isWebSearchMode = true
-            searchText = ""
         } else if commandId == "nav-shelf" {
             isShelfMode = true
             searchText = ""

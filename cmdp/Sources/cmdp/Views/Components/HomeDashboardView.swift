@@ -15,29 +15,13 @@ struct HomeDashboardView: View {
     var body: some View {
         VStack(spacing: 0) {
             DashboardCommandRow(
-                iconName: Command.Symbols.web,
-                title: "Web Search",
-                iconColor: .blue,
+                iconName: Command.Symbols.shelf,
+                title: "Open Shelf",
+                iconColor: .orange,
                 isSelected: selectedIndex == 0,
                 isHovered: hoveredIndex == 0
             )
             .onHover { hoveredIndex = $0 ? 0 : nil }
-            .onTapGesture {
-                isWebSearchMode = true
-                searchText = ""
-                selectedIndex = 0
-            }
-            .padding(.horizontal, 8)
-            .padding(.top, 8)
-            
-            DashboardCommandRow(
-                iconName: Command.Symbols.shelf,
-                title: "Open Shelf",
-                iconColor: .orange,
-                isSelected: selectedIndex == 1,
-                isHovered: hoveredIndex == 1
-            )
-            .onHover { hoveredIndex = $0 ? 1 : nil }
             .onTapGesture {
                 isShelfMode = true
                 searchText = ""
@@ -50,10 +34,10 @@ struct HomeDashboardView: View {
                 iconName: Command.Symbols.clipboard,
                 title: "Open Clipboard",
                 iconColor: .green,
-                isSelected: selectedIndex == 2,
-                isHovered: hoveredIndex == 2
+                isSelected: selectedIndex == 1,
+                isHovered: hoveredIndex == 1
             )
-            .onHover { hoveredIndex = $0 ? 2 : nil }
+            .onHover { hoveredIndex = $0 ? 1 : nil }
             .onTapGesture {
                 isClipboardMode = true
                 searchText = ""
@@ -66,10 +50,10 @@ struct HomeDashboardView: View {
                 iconName: Command.Symbols.activity,
                 title: "Open Activity Monitor",
                 iconColor: .purple,
-                isSelected: selectedIndex == 3,
-                isHovered: hoveredIndex == 3
+                isSelected: selectedIndex == 2,
+                isHovered: hoveredIndex == 2
             )
-            .onHover { hoveredIndex = $0 ? 3 : nil }
+            .onHover { hoveredIndex = $0 ? 2 : nil }
             .onTapGesture {
                 onOpenActivityMonitor()
             }
@@ -80,10 +64,10 @@ struct HomeDashboardView: View {
                 iconName: Command.Symbols.settings,
                 title: "Settings",
                 iconColor: .gray,
-                isSelected: selectedIndex == 4,
-                isHovered: hoveredIndex == 4
+                isSelected: selectedIndex == 3,
+                isHovered: hoveredIndex == 3
             )
-            .onHover { hoveredIndex = $0 ? 4 : nil }
+            .onHover { hoveredIndex = $0 ? 3 : nil }
             .onTapGesture {
                 isSettingsMode = true
                 searchText = ""

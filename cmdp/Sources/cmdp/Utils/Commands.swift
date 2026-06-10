@@ -71,13 +71,6 @@ struct Command: Identifiable, Equatable {
             script: "RESET_INDEX"
         ),
         Command(
-            id: "nav-web",
-            name: "Web Search Mode",
-            iconName: Symbols.web,
-            color: .blue,
-            script: "INTERNAL_NAV"
-        ),
-        Command(
             id: "nav-shelf",
             name: "Shelf",
             iconName: Symbols.shelf,

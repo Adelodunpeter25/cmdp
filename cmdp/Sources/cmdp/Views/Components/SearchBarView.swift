@@ -3,7 +3,6 @@ import SwiftUI
 struct SearchBarView: View {
     @Binding var searchText: String
     let isActivityMonitorMode: Bool
-    let isWebSearchMode: Bool
     let isShelfMode: Bool
     let isClipboardMode: Bool
     let isSettingsMode: Bool
@@ -12,13 +11,13 @@ struct SearchBarView: View {
 
     var body: some View {
         HStack {
-            Image(systemName: isActivityMonitorMode ? Command.Symbols.activity : (isWebSearchMode ? Command.Symbols.web : (isShelfMode ? Command.Symbols.shelf : (isClipboardMode ? Command.Symbols.clipboard : (isSettingsMode ? Command.Symbols.settings : (searchText.hasPrefix("/") ? Command.Symbols.search : (searchText.hasPrefix(">") ? Command.Symbols.terminal : Command.Symbols.command)))))))
+            Image(systemName: isActivityMonitorMode ? Command.Symbols.activity : (isShelfMode ? Command.Symbols.shelf : (isClipboardMode ? Command.Symbols.clipboard : (isSettingsMode ? Command.Symbols.settings : (searchText.hasPrefix("/") ? Command.Symbols.search : (searchText.hasPrefix(">") ? Command.Symbols.terminal : Command.Symbols.command))))))
                 .font(.system(size: 22, weight: .light))
                 .foregroundColor(Theme.searchIconColor)
                 .padding(.leading, 4)
 
             TextField(
-                isActivityMonitorMode ? "Search processes..." : (isWebSearchMode ? "Search the web..." : (isShelfMode ? "Search shelf items..." : (isClipboardMode ? "Search clipboard history..." : (isSettingsMode ? "Settings" : (searchText.hasPrefix(">") ? "Search commands..." : "Search file, folder or command..."))))),
+                isActivityMonitorMode ? "Search processes..." : (isShelfMode ? "Search shelf items..." : (isClipboardMode ? "Search clipboard history..." : (isSettingsMode ? "Settings" : (searchText.hasPrefix(">") ? "Search commands..." : "Search file, folder or command...")))),
                 text: $searchText
             )
             .textFieldStyle(.plain)
