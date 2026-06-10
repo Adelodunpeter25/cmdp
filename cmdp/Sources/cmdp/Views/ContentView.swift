@@ -17,6 +17,7 @@ struct ContentView: View {
     @State private var processSortByCPU: Bool = false
     @FocusState private var isSearchFieldFocused: Bool
     @State private var searchDebounceItem: DispatchWorkItem?
+    @State private var previousSearchText: String = ""
 
     // MARK: Computed display list
 
@@ -115,11 +116,8 @@ struct ContentView: View {
                             selectedIndex: selectedIndex,
                             hoveredIndex: $hoveredIndex,
                             onTapRow: { index, result in
-                                if selectedIndex == index {
-                                    executeSelection(result)
-                                } else {
-                                    selectedIndex = index
-                                }
+                                selectedIndex = index
+                                executeSelection(result)
                             }
                         )
                         .transition(.opacity)
@@ -130,11 +128,8 @@ struct ContentView: View {
                             selectedIndex: $selectedIndex,
                             hoveredIndex: $hoveredIndex,
                             onTapRow: { index, result in
-                                if selectedIndex == index {
-                                    executeSelection(result)
-                                } else {
-                                    selectedIndex = index
-                                }
+                                selectedIndex = index
+                                executeSelection(result)
                             }
                         )
                         .transition(.opacity)
@@ -348,19 +343,35 @@ struct ContentView: View {
             case 53: // Esc
                 if isActivityMonitorMode {
                     isActivityMonitorMode = false
-                    searchText = ""
+                    if previousSearchText.hasPrefix(">") {
+                        searchText = ">"
+                    } else {
+                        searchText = ""
+                    }
                     selectedIndex = 0
                 } else if isShelfMode {
                     isShelfMode = false
-                    searchText = ""
+                    if previousSearchText.hasPrefix(">") {
+                        searchText = ">"
+                    } else {
+                        searchText = ""
+                    }
                     selectedIndex = 0
                 } else if isClipboardMode {
                     isClipboardMode = false
-                    searchText = ""
+                    if previousSearchText.hasPrefix(">") {
+                        searchText = ">"
+                    } else {
+                        searchText = ""
+                    }
                     selectedIndex = 0
                 } else if isSettingsMode {
                     isSettingsMode = false
-                    searchText = ""
+                    if previousSearchText.hasPrefix(">") {
+                        searchText = ">"
+                    } else {
+                        searchText = ""
+                    }
                     selectedIndex = 0
                 } else {
                     searchText.isEmpty ? NSApp.hide(nil) : clearSearch()
@@ -381,6 +392,7 @@ struct ContentView: View {
     }
 
     func executeSelection(_ result: SearchResult) {
+        previousSearchText = searchText
         let path = result.Item.Path
         let url = URL(fileURLWithPath: path)
 
