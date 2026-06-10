@@ -1,6 +1,7 @@
 import SwiftUI
 
 struct SettingsView: View {
+    @ObservedObject var searchService: SearchService
     @StateObject private var launchService = LaunchAtLoginService.shared
     @Binding var isSettingsMode: Bool
     
@@ -47,13 +48,35 @@ struct SettingsView: View {
                 
                 // Index Info
                 VStack(alignment: .leading, spacing: 8) {
+                    Text("Software")
+                        .font(.system(size: 11, weight: .bold))
+                        .foregroundColor(Theme.textSecondary)
+                        .padding(.top, 8)
+
+                    Button(action: {
+                        AppDelegate.shared?.updaterController?.checkForUpdates(nil)
+                    }) {
+                        HStack {
+                            Image(systemName: "arrow.up.circle")
+                                .font(.system(size: 12))
+                            Text("Check for Updates...")
+                                .font(.system(size: 12, weight: .medium))
+                        }
+                        .foregroundColor(.white)
+                        .padding(.vertical, 8)
+                        .frame(maxWidth: .infinity)
+                        .background(Color.green)
+                        .cornerRadius(6)
+                    }
+                    .buttonStyle(PlainButtonStyle())
+
                     Text("Index Management")
                         .font(.system(size: 11, weight: .bold))
                         .foregroundColor(Theme.textSecondary)
                         .padding(.top, 8)
                     
                     Button(action: {
-                        SearchService().resetIndex()
+                        searchService.resetIndex()
                     }) {
                         HStack {
                             Image(systemName: "arrow.clockwise")

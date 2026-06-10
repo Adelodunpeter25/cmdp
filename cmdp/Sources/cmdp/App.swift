@@ -17,11 +17,13 @@ class SpotlightWindow: NSWindow {
 }
 
 class AppDelegate: NSObject, NSApplicationDelegate, SPUUpdaterDelegate {
+    static var shared: AppDelegate?
     var window: SpotlightWindow?
     var hotKeyService: HotKeyService?
     var updaterController: SPUStandardUpdaterController?
 
     func applicationDidFinishLaunching(_ notification: Notification) {
+        AppDelegate.shared = self
         // Initialize Sparkle
         updaterController = SPUStandardUpdaterController(startingUpdater: true, updaterDelegate: self, userDriverDelegate: nil)
 
@@ -71,11 +73,26 @@ class AppDelegate: NSObject, NSApplicationDelegate, SPUUpdaterDelegate {
     }
 
     func feedURLString(for updater: SPUUpdater) -> String? {
+        let url: String
         #if arch(arm64)
-        return "https://github.com/Adelodunpeter25/cmdp/releases/latest/download/appcast-arm64.xml"
+        url = "https://github.com/Adelodunpeter25/cmdp/releases/latest/download/appcast-arm64.xml"
         #else
-        return "https://github.com/Adelodunpeter25/cmdp/releases/latest/download/appcast-x64.xml"
+        url = "https://github.com/Adelodunpeter25/cmdp/releases/latest/download/appcast-x64.xml"
         #endif
+        print("Sparkle: Providing feed URL: \(url)")
+        return url
+    }
+    
+    func updater(_ updater: SPUUpdater, didAbortWithError error: Error) {
+        print("Sparkle: Update aborted with error: \(error.localizedDescription)")
+    }
+    
+    func updater(_ updater: SPUUpdater, didFinishLoading appcast: SUAppcast) {
+        print("Sparkle: Finished loading appcast with \(appcast.items.count) items")
+    }
+    
+    func updaterDidNotFindUpdate(_ updater: SPUUpdater) {
+        print("Sparkle: No update found")
     }
 }
 

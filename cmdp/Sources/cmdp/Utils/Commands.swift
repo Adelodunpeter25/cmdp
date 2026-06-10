@@ -14,7 +14,6 @@ struct Command: Identifiable, Equatable {
         static let shutdown = "power"
         static let lock = "lock.fill"
         static let trash = "trash"
-        static let resetIndex = "arrow.counterclockwise.circle"
         static let web = "globe"
         static let shelf = "square.and.arrow.down.on.square"
         static let clipboard = "doc.on.clipboard"
@@ -62,13 +61,6 @@ struct Command: Identifiable, Equatable {
             iconName: Symbols.trash,
             color: .gray,
             script: "tell application \"Finder\"\nif (count of items in trash) > 0 then\nempty trash\nend if\nend tell"
-        ),
-        Command(
-            id: "reset-index",
-            name: "Reset Index",
-            iconName: Symbols.resetIndex,
-            color: .teal,
-            script: "RESET_INDEX"
         ),
         Command(
             id: "nav-shelf",

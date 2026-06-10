@@ -105,7 +105,7 @@ struct ContentView: View {
                     .transition(.opacity)
             } else if isSettingsMode {
                 Divider()
-                SettingsView(isSettingsMode: $isSettingsMode)
+                SettingsView(searchService: searchService, isSettingsMode: $isSettingsMode)
                     .transition(.opacity)
             } else {
                 if !searchText.isEmpty && !groupedResults.isEmpty {
@@ -398,7 +398,7 @@ struct ContentView: View {
 
         if result.Item.itemType == .command {
             // Only hide if it's not a navigation command
-            if !path.hasPrefix("nav-") && path != "reset-index" {
+            if !path.hasPrefix("nav-") {
                 NSApp.hide(nil)
             }
             executeCommand(path)
@@ -423,9 +423,8 @@ struct ContentView: View {
     }
 
     private func executeCommand(_ commandId: String) {
-        if commandId == "reset-index" {
-            searchService.resetIndex()
-        } else if commandId == "nav-shelf" {
+        previousSearchText = searchText
+        if commandId == "nav-shelf" {
             isShelfMode = true
             searchText = ""
         } else if commandId == "nav-clipboard" {
