@@ -42,6 +42,36 @@ struct Command: Identifiable, Equatable {
             name: "Reset Index",
             iconName: "arrow.counterclockwise.circle",
             script: "RESET_INDEX"
+        ),
+        Command(
+            id: "nav-web",
+            name: "Web Search Mode",
+            iconName: "globe",
+            script: "INTERNAL_NAV"
+        ),
+        Command(
+            id: "nav-shelf",
+            name: "Shelf",
+            iconName: "square.and.arrow.down.on.square",
+            script: "INTERNAL_NAV"
+        ),
+        Command(
+            id: "nav-clipboard",
+            name: "Clipboard History",
+            iconName: "doc.on.clipboard",
+            script: "INTERNAL_NAV"
+        ),
+        Command(
+            id: "nav-activity",
+            name: "Activity Monitor",
+            iconName: "cpu",
+            script: "INTERNAL_NAV"
+        ),
+        Command(
+            id: "nav-settings",
+            name: "Settings",
+            iconName: "gearshape",
+            script: "INTERNAL_NAV"
         )
     ]
 }

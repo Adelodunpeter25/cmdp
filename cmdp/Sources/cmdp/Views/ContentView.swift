@@ -30,6 +30,16 @@ struct ContentView: View {
         if searchText.hasPrefix("/") {
             return searchService.results
         }
+        if searchText.hasPrefix(">") {
+            let query = String(searchText.dropFirst()).lowercased()
+            let allCmds = Command.allCommands.map { cmd in
+                SearchResult(Item: IndexItem(Name: cmd.name, Path: cmd.id, IconPath: "", itemType: .command), Score: 0)
+            }
+            if query.isEmpty {
+                return allCmds
+            }
+            return allCmds.filter { $0.Item.Name.lowercased().contains(query) }
+        }
         return groupAndSort(searchService.results)
     }
 
@@ -65,6 +75,7 @@ struct ContentView: View {
                 isWebSearchMode: isWebSearchMode,
                 isShelfMode: isShelfMode,
                 isClipboardMode: isClipboardMode,
+                isSettingsMode: isSettingsMode,
                 isSearchFieldFocused: $isSearchFieldFocused,
                 onClear: { clearSearch() }
             )
@@ -222,21 +233,17 @@ struct ContentView: View {
                     .padding(.vertical, 8)
                     .transition(.opacity)
                 } else if searchText.isEmpty {
-                    Divider()
-                    HomeDashboardView(
-                        selectedIndex: $selectedIndex,
-                        hoveredIndex: $hoveredIndex,
-                        isWebSearchMode: $isWebSearchMode,
-                        isShelfMode: $isShelfMode,
-                        isClipboardMode: $isClipboardMode,
-                        isSettingsMode: $isSettingsMode,
-                        searchText: $searchText,
-                        processSortByCPU: $processSortByCPU,
-                        processService: processService,
-                        onOpenActivityMonitor: {
-                            openActivityMonitor()
-                        }
-                    )
+                    // Empty state - just the search bar (already shown above)
+                    // We can optionally add a subtle hint here
+                    VStack(spacing: 8) {
+                        Spacer()
+                        Text("Type to search, / for files, > for commands")
+                            .font(.system(size: 12))
+                            .foregroundColor(Theme.textSecondary.opacity(0.5))
+                        Spacer()
+                    }
+                    .frame(height: 100)
+                    .frame(maxWidth: .infinity)
                 }
             }
         }
@@ -431,7 +438,7 @@ struct ContentView: View {
                 totalSelectable = 0
             } else {
                 if searchText.isEmpty {
-                    totalSelectable = 5
+                    totalSelectable = 0
                 } else {
                     totalSelectable = groupedResults.isEmpty ? 1 : groupedResults.count
                 }
@@ -458,27 +465,11 @@ struct ContentView: View {
                     // No action
                 } else if isClipboardMode {
                     // No action
+                } else if isSettingsMode {
+                    // No action
                 } else {
                     if searchText.isEmpty {
-                        if selectedIndex == 0 {
-                            isWebSearchMode = true
-                            searchText = ""
-                            selectedIndex = 0
-                        } else if selectedIndex == 1 {
-                            isShelfMode = true
-                            searchText = ""
-                            selectedIndex = 0
-                        } else if selectedIndex == 2 {
-                            isClipboardMode = true
-                            searchText = ""
-                            selectedIndex = 0
-                        } else if selectedIndex == 3 {
-                            openActivityMonitor()
-                        } else if selectedIndex == 4 {
-                            isSettingsMode = true
-                            searchText = ""
-                            selectedIndex = 0
-                        }
+                        // No action
                     } else {
                         if groupedResults.isEmpty {
                             if let url = WebService.shared.searchURL(for: searchText) {
@@ -566,6 +557,20 @@ struct ContentView: View {
     private func executeCommand(_ commandId: String) {
         if commandId == "reset-index" {
             searchService.resetIndex()
+        } else if commandId == "nav-web" {
+            isWebSearchMode = true
+            searchText = ""
+        } else if commandId == "nav-shelf" {
+            isShelfMode = true
+            searchText = ""
+        } else if commandId == "nav-clipboard" {
+            isClipboardMode = true
+            searchText = ""
+        } else if commandId == "nav-activity" {
+            openActivityMonitor()
+        } else if commandId == "nav-settings" {
+            isSettingsMode = true
+            searchText = ""
         } else if let command = Command.allCommands.first(where: { $0.id == commandId }) {
             CommandService.shared.execute(command)
         }
