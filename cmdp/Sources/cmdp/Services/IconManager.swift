@@ -35,19 +35,9 @@ class IconManager: ObservableObject {
     }
 
     func getCommandIcon(for commandId: String) -> String {
-        switch commandId {
-        case "sleep":       return Command.Symbols.sleep
-        case "restart":     return Command.Symbols.restart
-        case "shutdown":    return Command.Symbols.shutdown
-        case "lock":        return Command.Symbols.lock
-        case "empty-trash": return Command.Symbols.trash
-        case "reset-index": return Command.Symbols.resetIndex
-        case "nav-web":       return Command.Symbols.web
-        case "nav-shelf":     return Command.Symbols.shelf
-        case "nav-clipboard": return Command.Symbols.clipboard
-        case "nav-activity":  return Command.Symbols.activity
-        case "nav-settings":  return Command.Symbols.settings
-        default:            return Command.Symbols.command
+        if let command = Command.allCommands.first(where: { $0.id == commandId }) {
+            return command.iconName
         }
+        return Command.Symbols.command
     }
 }
