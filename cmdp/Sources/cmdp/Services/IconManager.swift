@@ -42,6 +42,11 @@ class IconManager: ObservableObject {
         case "lock":        return "lock.fill"
         case "empty-trash": return "trash"
         case "reset-index": return "arrow.counterclockwise.circle"
+        case "nav-web":       return "globe"
+        case "nav-shelf":     return "square.and.arrow.down.on.square"
+        case "nav-clipboard": return "doc.on.clipboard"
+        case "nav-activity":  return "cpu"
+        case "nav-settings":  return "gearshape"
         default:            return "command"
         }
     }
